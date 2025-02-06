@@ -1,0 +1,3 @@
+[workspace]
+members = ["crates/paytube", "crates/paytube-agave"]
+resolver = "2"
