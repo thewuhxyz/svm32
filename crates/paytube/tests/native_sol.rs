@@ -1,9 +1,9 @@
 mod setup;
 
 use {
-    paytube_svm::{transaction::PayTubeTransaction, PayTubeChannel},
     setup::{system_account, TestValidatorContext},
     solana_sdk::{signature::Keypair, signer::Signer},
+    paytube_agave::{transaction::PayTubeTransaction, PayTubeChannel},
 };
 
 #[test]
@@ -22,16 +22,13 @@ fn test_native_sol() {
         (will_pubkey, system_account(10_000_000)),
     ];
 
-
     let context = TestValidatorContext::start_with_accounts(accounts);
-
     let test_validator = &context.test_validator;
     let payer = context.payer.insecure_clone();
 
     let rpc_client = test_validator.get_rpc_client();
 
     let paytube_channel = PayTubeChannel::new(vec![payer, alice, bob, will], rpc_client);
-    println!("here");
 
     paytube_channel.process_paytube_transfers(&[
         // Alice -> Bob 2_000_000
@@ -64,7 +61,6 @@ fn test_native_sol() {
         },
     ]);
 
-    println!("here");
     // Ledger:
     // Alice:   10_000_000 - 2_000_000 - 2_000_000 + 1_000_000  = 7_000_000
     // Bob:     10_000_000 + 2_000_000 - 5_000_000 + 2_000_000  = 9_000_000

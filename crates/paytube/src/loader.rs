@@ -33,9 +33,12 @@ impl<'a> PayTubeAccountLoader<'a> {
     }
 }
 
-/// SVM implementation of the `AccountLoader` plugin trait.
+/// Implementation of the SVM API's `TransactionProcessingCallback` interface.
 ///
-/// In the Agave validator, this implementation is `Bank`.
+/// The SVM API requires this plugin be provided to provide the SVM with the
+/// ability to load accounts.
+///
+/// In the Agave validator, this implementation is Bank, powered by AccountsDB.
 impl TransactionProcessingCallback for PayTubeAccountLoader<'_> {
     fn get_account_shared_data(&self, pubkey: &Pubkey) -> Option<AccountSharedData> {
         if let Some(account) = self.cache.read().unwrap().get(pubkey) {

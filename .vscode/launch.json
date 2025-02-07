@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/thewuh/Development/svm32/crates/bpf_loader/test_elfs/src/noop_aligned",
+      "program": "/Users/thewuh/Development/svm32/crates/bpf_loader/test_elfs/src/noop_aligned/build/Debug/outDebug"
+    }
+  ]
+}

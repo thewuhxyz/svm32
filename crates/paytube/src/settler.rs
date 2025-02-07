@@ -12,12 +12,16 @@
 
 use {
     crate::transaction::PayTubeTransaction,
-    solana_client::rpc_client::RpcClient,
+    solana_client::{rpc_client::RpcClient, rpc_config::RpcSendTransactionConfig},
     solana_sdk::{
-        instruction::Instruction as SolanaInstruction, pubkey::Pubkey, signature::Keypair,
-        signer::Signer, system_instruction, transaction::Transaction as SolanaTransaction,
+        commitment_config::CommitmentConfig, instruction::Instruction as SolanaInstruction,
+        pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction,
+        transaction::Transaction as SolanaTransaction,
     },
-    solana_svm::{transaction_processing_result::TransactionProcessingResultExtensions, transaction_processor::LoadAndExecuteSanitizedTransactionsOutput},
+    solana_svm::{
+        transaction_processing_result::TransactionProcessingResultExtensions,
+        transaction_processor::LoadAndExecuteSanitizedTransactionsOutput,
+    },
     spl_associated_token_account::get_associated_token_address,
     std::collections::HashMap,
 };
@@ -30,6 +34,13 @@ use {
 ///
 /// This design allows the ledger to combine transfers from a -> b and b -> a
 /// in the same entry, calculating the final delta between two parties.
+///
+/// Note that this design could be even _further_ optimized to minimize the
+/// number of required settlement transactions in a few ways, including
+/// combining transfers across parties, ignoring zero-balance changes, and
+/// more. An on-chain program on the base chain could even facilitate
+/// multi-party transfers, further reducing the number of required
+/// settlement transactions.
 #[derive(PartialEq, Eq, Hash)]
 struct LedgerKey {
     mint: Option<Pubkey>,
@@ -106,40 +117,61 @@ impl Ledger {
     }
 }
 
+const CHUNK_SIZE: usize = 10;
+
 /// PayTube final transaction settler.
 pub struct PayTubeSettler<'a> {
+    instructions: Vec<SolanaInstruction>,
+    keys: &'a [Keypair],
     rpc_client: &'a RpcClient,
 }
 
 impl<'a> PayTubeSettler<'a> {
-    pub fn new(rpc_client: &'a RpcClient) -> Self {
-        Self { rpc_client }
-    }
-
-    /// Settle the payment channel results to the Solana blockchain.
-    pub fn process_settle(
-        &self,
+    /// Create a new instance of a `PayTubeSettler` by tallying up all
+    /// transfers into a ledger.
+    pub fn new(
+        rpc_client: &'a RpcClient,
         paytube_transactions: &[PayTubeTransaction],
         svm_output: LoadAndExecuteSanitizedTransactionsOutput,
-        keys: &[Keypair],
-    ) {
+        keys: &'a [Keypair],
+    ) -> Self {
         // Build the ledger from the processed PayTube transactions.
         let ledger = Ledger::new(paytube_transactions, svm_output);
 
         // Build the Solana instructions from the ledger.
         let instructions = ledger.generate_base_chain_instructions();
 
-        // Send the transactions to the Solana blockchain.
+        Self {
+            instructions,
+            keys,
+            rpc_client,
+        }
+    }
+
+    /// Count how many settlement transactions are estimated to be required.
+    pub(crate) fn num_transactions(&self) -> usize {
+        self.instructions.len().div_ceil(CHUNK_SIZE)
+    }
+
+    /// Settle the payment channel results to the Solana blockchain.
+    pub fn process_settle(&self) {
         let recent_blockhash = self.rpc_client.get_latest_blockhash().unwrap();
-        instructions.chunks(10).for_each(|chunk| {
+        self.instructions.chunks(CHUNK_SIZE).for_each(|chunk| {
             let transaction = SolanaTransaction::new_signed_with_payer(
                 chunk,
-                Some(&keys[0].pubkey()),
-                keys,
+                Some(&self.keys[0].pubkey()),
+                self.keys,
                 recent_blockhash,
             );
             self.rpc_client
-                .send_and_confirm_transaction(&transaction)
+                .send_and_confirm_transaction_with_spinner_and_config(
+                    &transaction,
+                    CommitmentConfig::processed(),
+                    RpcSendTransactionConfig {
+                        skip_preflight: true,
+                        ..Default::default()
+                    },
+                )
                 .unwrap();
         });
     }

@@ -1,12 +1,12 @@
 mod setup;
 
 use {
-    paytube_svm::{transaction::PayTubeTransaction, PayTubeChannel},
     setup::{
         get_token_account_balance, mint_account, system_account, token_account,
         TestValidatorContext,
     },
     solana_sdk::{pubkey::Pubkey, signature::Keypair, signer::Signer},
+    paytube_agave::{transaction::PayTubeTransaction, PayTubeChannel},
     spl_associated_token_account::get_associated_token_address,
 };
 

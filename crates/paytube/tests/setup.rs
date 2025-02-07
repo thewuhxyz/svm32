@@ -22,13 +22,6 @@ pub struct TestValidatorContext {
 
 impl TestValidatorContext {
     pub fn start_with_accounts(accounts: Vec<(Pubkey, AccountSharedData)>) -> Self {
-        #[rustfmt::skip]
-        solana_logger::setup_with_default(
-            "solana_rbpf::vm=debug,\
-             solana_runtime::message_processor=debug,\
-             solana_runtime::system_instruction_processor=trace",
-        );
-
         let epoch_schedule = EpochSchedule::custom(SLOTS_PER_EPOCH, SLOTS_PER_EPOCH, false);
 
         let (test_validator, payer) = TestValidatorGenesis::default()

@@ -3,10 +3,8 @@
 use {
     solana_bpf_loader_program::syscalls::create_program_runtime_environment_v1,
     solana_compute_budget::compute_budget::ComputeBudget,
-    solana_program_runtime::loaded_programs::{
-        BlockRelation, ForkGraph, LoadProgramMetrics, ProgramCacheEntry,
-    },
-    solana_sdk::{account::ReadableAccount, clock::Slot, feature_set::FeatureSet, transaction},
+    solana_program_runtime::loaded_programs::{BlockRelation, ForkGraph, ProgramCacheEntry},
+    solana_sdk::{clock::Slot, feature_set::FeatureSet, transaction},
     solana_svm::{
         account_loader::CheckedTransactionDetails,
         transaction_processing_callback::TransactionProcessingCallback,
@@ -21,7 +19,6 @@ use {
 /// processor how to work across forks.
 ///
 /// Since PayTube doesn't use slots or forks, this implementation is mocked.
-#[derive(Debug)]
 pub(crate) struct PayTubeForkGraph {}
 
 impl ForkGraph for PayTubeForkGraph {
@@ -39,51 +36,44 @@ pub(crate) fn create_transaction_batch_processor<CB: TransactionProcessingCallba
     callbacks: &CB,
     feature_set: &FeatureSet,
     compute_budget: &ComputeBudget,
+    fork_graph: Arc<RwLock<PayTubeForkGraph>>,
 ) -> TransactionBatchProcessor<PayTubeForkGraph> {
-    // let processor = TransactionBatchProcessor::<PayTubeForkGraph>::default();
-    let processor = TransactionBatchProcessor::<PayTubeForkGraph>::new_uninitialized(1, 1);
-    // let fork_graph = Arc::new(RwLock::new(PayTubeForkGraph {}));
+    // Create a new transaction batch processor.
+    //
+    // We're going to use slot 1 specifically because any programs we add will
+    // be deployed in slot 0, and they are delayed visibility until the next
+    // slot (1).
+    // This includes programs owned by BPF Loader v2, which are automatically
+    // marked as "depoyed" in slot 0.
+    // See `solana_svm::program_loader::load_program_with_pubkey` for more
+    // details.
+    let processor = TransactionBatchProcessor::<PayTubeForkGraph>::new_uninitialized(
+        /* slot */ 1, /* epoch */ 1,
+    );
 
     {
-        let mut cache = processor.program_cache.write().unwrap();
+        let mut program_cache = processor.program_cache.write().unwrap();
+        program_cache.set_fork_graph(Arc::downgrade(&fork_graph));
 
-        // let foo = Rc::new(Weak::new());
+        // let empty_loader = || Arc::new(BuiltinProgram::new_loader(VmConfig::default()));
 
-        // cache.latest_root_epoch = 1;
-        // cache.latest_root_slot = 1;
-
-        // foo.
-        // Initialize the mocked fork graph.
-        // cache.fork_graph = Some(Arc::downgrade(&fork_graph));
-        cache.fork_graph = Some(Arc::downgrade(&Arc::new(RwLock::new(PayTubeForkGraph {}))));
-
-        // Initialize a proper cache environment.
-        // (Use Loader v4 program to initialize runtime v2 if desired)
-        cache.environments.program_runtime_v1 = Arc::new(
+        program_cache.latest_root_slot = 1;
+        program_cache.latest_root_epoch = 1;
+        program_cache.environments.program_runtime_v1 = Arc::new(
             create_program_runtime_environment_v1(feature_set, compute_budget, false, false)
                 .unwrap(),
         );
+        // program_cache.environments.program_runtime_v2 =
+        //     program_runtime_environment_v2.unwrap_or(empty_loader());
 
-        // Add the SPL Token program to the cache.
-        if let Some(program_account) = callbacks.get_account_shared_data(&spl_token::id()) {
-            let elf_bytes = program_account.data();
-            let program_runtime_environment = cache.environments.program_runtime_v1.clone();
-            cache.assign_program(
-                spl_token::id(),
-                Arc::new(
-                    ProgramCacheEntry::new(
-                        &solana_sdk::bpf_loader::id(),
-                        program_runtime_environment,
-                        0,
-                        0,
-                        elf_bytes,
-                        elf_bytes.len(),
-                        &mut LoadProgramMetrics::default(),
-                    )
-                    .unwrap(),
-                ),
-            );
-        }
+        // processor.configure_program_runtime_environments_inner(
+        //     &mut program_cache,
+        // Some(Arc::new(
+        //     create_program_runtime_environment_v2(feature_set, compute_budget, false, false)
+        //         .unwrap(),
+        // )),
+        //     None,
+        // );
     }
 
     // Add the system program builtin.
@@ -113,7 +103,7 @@ pub(crate) fn create_transaction_batch_processor<CB: TransactionProcessingCallba
     processor
 }
 
-/// This functions is also a mock. In the Agave validator, the bank pre-checks
+/// This function is also a mock. In the Agave validator, the bank pre-checks
 /// transactions before providing them to the SVM API. We mock this step in
 /// PayTube, since we don't need to perform such pre-checks.
 pub(crate) fn get_transaction_check_results(
