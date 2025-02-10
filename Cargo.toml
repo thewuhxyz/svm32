@@ -9,6 +9,7 @@ members = [
     # "crates/svm-rent-collector", 
     # "crates/svm-transaction", 
     "crates/system", 
+    "sp1/*"
 ]
 resolver = "2"
 
