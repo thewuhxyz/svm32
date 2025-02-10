@@ -1,3 +1,4 @@
+use solana_rbpf::program::SBPFVersion;
 #[allow(deprecated)]
 use solana_sdk::sysvar::recent_blockhashes::{Entry as BlockhashesEntry, RecentBlockhashes};
 use {
@@ -329,10 +330,12 @@ fn create_custom_environment<'a>() -> BuiltinProgram<InvokeContext<'a>> {
         reject_broken_elfs: true,
         noop_instruction_rate: 256,
         sanitize_user_provided_values: true,
-        external_internal_function_hash_collision: false,
-        reject_callx_r10: true,
-        enable_sbpf_v1: true,
-        enable_sbpf_v2: false,
+        // external_internal_function_hash_collision: false,
+        // reject_callx_r10: true,
+        // enable_sbpf_v1: true,
+        // enable_sbpf_v2: false,
+        enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V1,
+        paged_memory_mapping: false,
         optimize_rodata: false,
         aligned_memory_mapping: true,
     };

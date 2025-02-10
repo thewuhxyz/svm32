@@ -116,31 +116,32 @@ fn cleanup() {
     }
 }
 
-// #[test]
-// fn execute_fixtures() {
-//     let mut base_dir = setup();
-//     base_dir.push("instr");
-//     base_dir.push("fixtures");
+#[test]
+#[ignore = "download may fail"]
+fn execute_fixtures() {
+    let mut base_dir = setup();
+    base_dir.push("instr");
+    base_dir.push("fixtures");
 
-//     // bpf-loader tests
-//     base_dir.push("bpf-loader");
-//     run_from_folder(&base_dir, &HashSet::new());
-//     base_dir.pop();
+    // bpf-loader tests
+    base_dir.push("bpf-loader");
+    run_from_folder(&base_dir, &HashSet::new());
+    base_dir.pop();
 
-//     // System program tests
-//     base_dir.push("system");
-//     // These cases hit a debug_assert here:
-//     // https://github.com/anza-xyz/agave/blob/0142c7fa1c46b05d201552102eb91b6d4b10f077/svm/src/transaction_account_state_info.rs#L34
-//     let run_as_instr = HashSet::from([
-//         OsString::from("7fcde5cb94e1dc44.bin.fix"),
-//         OsString::from("9f3c001dcd1803fe.bin.fix"),
-//         OsString::from("34ee00c659dc5aa6.bin.fix"),
-//         OsString::from("8fd951ecde987723.bin.fix"),
-//     ]);
-//     run_from_folder(&base_dir, &run_as_instr);
+    // System program tests
+    base_dir.push("system");
+    // These cases hit a debug_assert here:
+    // https://github.com/anza-xyz/agave/blob/0142c7fa1c46b05d201552102eb91b6d4b10f077/svm/src/transaction_account_state_info.rs#L34
+    let run_as_instr = HashSet::from([
+        OsString::from("7fcde5cb94e1dc44.bin.fix"),
+        OsString::from("9f3c001dcd1803fe.bin.fix"),
+        OsString::from("34ee00c659dc5aa6.bin.fix"),
+        OsString::from("8fd951ecde987723.bin.fix"),
+    ]);
+    run_from_folder(&base_dir, &run_as_instr);
 
-//     cleanup();
-// }
+    cleanup();
+}
 
 fn run_from_folder(base_dir: &PathBuf, run_as_instr: &HashSet<OsString>) {
     for path in std::fs::read_dir(base_dir).unwrap() {
@@ -428,14 +429,11 @@ fn execute_fixture_as_instr(
     let program_idx = sanitized_message.instructions()[0].program_id_index as usize;
     let program_id = *sanitized_message.account_keys().get(program_idx).unwrap();
 
-    let mut timings = ExecuteTimings::default();
-
     let loaded_program = program_loader::load_program_with_pubkey(
         mock_bank,
         &batch_processor.get_environments_for_epoch(2).unwrap(),
         &program_id,
         42,
-        &mut timings,
         false,
     )
     .unwrap();

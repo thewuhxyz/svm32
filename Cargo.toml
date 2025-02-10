@@ -1,5 +1,15 @@
 [workspace]
-members = ["crates/paytube", "crates/svm-sprint", "crates/bpf_loader"]
+members = [
+    "crates/bpf_loader",
+    "crates/compute-budget",
+    # "crates/paytube", 
+    "crates/program-runtime",
+    "crates/svm", 
+    # "crates/svm-conformance", 
+    # "crates/svm-rent-collector", 
+    # "crates/svm-transaction", 
+    "crates/system", 
+]
 resolver = "2"
 
 [workspace.package]
@@ -8,73 +18,137 @@ edition = "2021"
 
 [workspace.dependencies]
 assert_matches = "1.5"
+base64 = "0.22.1"
 bincode = "1.3.3"
+bs58 = { version = "0.5.1", default-features = false }
 byteorder = "1.5.0"
+clap = "2.33.1"
+crossbeam-channel = "0.5.14"
 ed25519-dalek = "=1.0.1"
+enum-iterator = "1.5.0"
+env_logger = "0.9.3"
+itertools = "0.12.1"
+jsonrpc-core = "18.0.0"
+jsonrpc-core-client = "18.0.0"
+jsonrpc-derive = "18.0.0"
+jsonrpc-http-server = "18.0.0"
+jsonrpc-ipc-server = "18.0.0"
+jsonrpc-pubsub = "18.0.0"
 lazy_static = "1.5"
-libsecp256k1 = "0.7"
+libc = "0.2.169"
+libsecp256k1 = "=0.6"
 log = "0.4.22"
 memoffset = "0.9"
+num-derive = "0.4"
+num-traits = "0.2"
 openssl = "0.10"
+percentage = "0.1.0"
 prost = "=0.11.9"
+prost-build = "=0.11.9"
+prost-types = "=0.11.9"
 qualifier_attr = { version = "0.2.2", default-features = false}
 rand = "0.8.5"
 rand0-7 = { package = "rand", version = "0.7" }
 scopeguard = "1.2.0"
-# shuttle = "0.8.0"
-solana-bn254 = { version = "2" }
-solana-bpf-loader-program = "2"
-solana-clock = "2"
-solana-compute-budget = { version = "2", features = [] }
+serde = "1.0.217" 
+serde_derive = "1.0.217"
+serde_json = "1.0.138"
+shuttle = "0.8.0"
+solana-account = { version = "=2.1.13" }
+solana-account-decoder = { version = "=2.1.13" }
+solana-bn254 = { version = "=2.1.13" }
+solana-bpf-loader-program = { path = "crates/bpf_loader"}
+solana-clock = "=2.1.13"
+solana-compute-budget = { version = "=2.1.13", features = [] }
 solana-compute-budget-interface = "0.0.2"
-solana-compute-budget-program = "2"
-solana-client = "2"
-solana-curve25519 = { version = "2" }
-solana-epoch-schedule = "2"
+solana-compute-budget-program = {path = "crates/compute-budget"}
+# solana-compute-budget-program = "=2.1.13"
+solana-client = "=2.1.13"
+solana-curve25519 = { version = "=2.1.13" }
+solana-epoch-rewards = "0.0.3"
+solana-epoch-schedule = "=2.1.13"
 solana-ed25519-program = "1.8.16"
-solana-feature-set = "2"
-solana-fee-calculator = "2"
+solana-feature-set = "=2.1.13"
+solana-fee = "=2.1.13"
+solana-fee-calculator = "=2.1.13"
 solana-fee-structure = "0.0.2"
-solana-frozen-abi = { version = "2", features = [
+solana-frozen-abi = { version = "=2.1.13", features = [
     "frozen-abi",
 ] }
-solana-frozen-abi-macro = { version = "2", features = [
+solana-frozen-abi-macro = { version = "=2.1.13", features = [
     "frozen-abi",
 ] }
-solana-instruction = { version = "2", features = ["std"] }
+solana-hash = {  version = "=2.1.13", default-features = false }
+solana-instruction = { version = "=0.0.3", features = ["std"] }
+# solana-instruction = { version = "=2.1.13", features = ["std"] }
 solana-keypair = "0.0.2"
-solana-loader-v4-program = { version = "2" }
-solana-log-collector = "2"
-solana-logger = "2"
-solana-measure = { version = "2" }
-solana-native-token = "2"
-solana-poseidon = { version = "2" }
-solana-program-memory = { version = "2" }
-solana-program-runtime = {version = "2", features = []}
-solana-pubkey = "2"
-solana_rbpf = "=0.8.5"
-solana-rent = "2"
+solana-last-restart-slot = { version = "=2.1.13" }
+solana-loader-v4-program = { version = "=2.1.13" }
+solana-log-collector = "=2.1.13"
+solana-logger = "=2.1.13"
+solana-measure = { version = "=2.1.13" }
+solana-message = { version = "=0.0.3" }
+solana-metrics = { version = "=2.1.13" }
+solana-native-token = "=2.1.13"
+solana-nonce = "=0.0.2"
+solana-perf = { version = "=2.1.13" }
+solana-poseidon = { version = "=2.1.13" }
+solana-program = { version = "=2.1.13" }
+solana-program-memory = { version = "=2.1.13" }
+# solana-program-runtime = {version = "=2.1.13", features = []}
+solana-program-runtime = {path = "crates/program-runtime"}
+solana-precompiles = { version = "=0.0.2" }
+solana-pubkey = "=2.1.13"
+# solana_rbpf = "=0.8.5"
+solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
+solana-rent = "=2.1.13"
 solana-reserved-account-keys = "0.0.2"
+solana-rpc-client = "=2.1.13"
+solana-rpc-client-api = "=2.1.13"
+solana-runtime-transaction = "=2.1.13"
 # solana-sbpf = "0.10.0"
-solana-sdk = { version = "2.1.13", features = ["dev-context-only-utils"] }
+solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils"] }
+solana-sdk-ids = { version = "=0.0.3" }
 solana-secp256k1-program = "1.8.16"
-solana-secp256r1-program = { version = "2", features = ["openssl-vendored"] }
-solana-signature = "2"
+solana-secp256r1-program = { version = "=2.1.13", features = ["openssl-vendored"] }
+solana-slot-hashes = { version = "=2.1.13" }
+solana-signature = "=2.1.13"
 solana-signer = "0.0.2"
-solana-svm = { version = "2", features = ["dev-context-only-utils"] }
-solana-svm-conformance = "2"
-solana-svm-transaction = "2"
-solana-system-program = "2"
+solana-stable-layout = { version = "=2.1.13" }
+# solana-svm = { version = "=2.1.13", features = ["dev-context-only-utils"] }
+# solana-svm-conformance = { path = "crates/svm-conformance"}
+# solana-svm-rent-collector = { path = "crates/svm-rent-collector"}
+# solana-svm-transaction = { path = "crates/svm-transaction" }
+solana-svm-conformance = { version = "=2.1.13" }
+solana-svm-rent-collector = { version = "=2.1.13" }
+solana-svm-transaction = { version = "=2.1.13" }
+solana-system-interface = "=1.0.0"
+solana-system-program = {path = "crates/system"}
+# solana-system-program = "=2.1.13"
+solana-sysvar-id = { version = "=2.1.13" }
 # solana-system-transaction = "0.0.2"
 solana-sysvar = "0.0.2"
-solana-test-validator = "2"
-solana-timings = "2"
-# solana-transaction = "0.0.2"
-solana-type-overrides = "2"
-solana-vote = { version = "2" }
-spl-token = "7"
+solana-test-validator = "=2.1.13"
+solana-timings = "2.1.13"
+solana-transaction = "0.0.2"
+solana-transaction-context = { version = "0.0.2" }
+solana-transaction-status = { version = "=2.1.13" }
+solana-type-overrides = "=2.1.13"
+solana-version = { version = "=2.1.13" }
+solana-vote = { version = "=2.1.13" }
 spl-associated-token-account = "6"
+spl-token = "7"
+spl-token-2022 = "7"
+static_assertions = "1.1.0"
 subtle = "2.5" 
 termcolor = "1.4"
 test-case = "3"
 thiserror = "1.0.68"
+tokio = "1.43.0"
+tokio-serde = "0.8"
+tokio-stream = "0.1.17"
+tokio-tungstenite = "0.20.1"
+tokio-util = "0.7.13"
+
+[patch.crates-io]
+solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}

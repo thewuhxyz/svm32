@@ -1,0 +1,9 @@
+[package]
+name = "solana-svm-rent-collector"
+description = "Solana SVM Rent Collector"
+documentation = "https://docs.rs/solana-svm-rent-collector"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+solana-sdk = { workspace = true }
