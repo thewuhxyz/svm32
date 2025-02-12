@@ -306,7 +306,7 @@ pub fn create_program_runtime_environment_v1<'a>(
         // enable_sbpf_v2: false,
         optimize_rodata: false,
         enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V2,
-        paged_memory_mapping: false,
+        // paged_memory_mapping: false,
         aligned_memory_mapping: !feature_set.is_active(&bpf_account_data_direct_mapping::id()),
         // Warning, do not use `Config::default()` so that configuration here is explicit.
     };
@@ -513,7 +513,7 @@ pub fn create_program_runtime_environment_v2<'a>(
         // enable_sbpf_v1: false,
         // enable_sbpf_v2: true,
         enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V2,
-        paged_memory_mapping: false,
+        // paged_memory_mapping: false,
         optimize_rodata: true,
         aligned_memory_mapping: true,
         // Warning, do not use `Config::default()` so that configuration here is explicit.
@@ -548,7 +548,9 @@ fn translate_type_inner<'a, T>(
 ) -> Result<&'a mut T, Error> {
     let host_addr = translate(memory_mapping, access_type, vm_addr, size_of::<T>() as u64)?;
     if !check_aligned {
-        Ok(unsafe { std::mem::transmute::<u64, &mut T>(host_addr) })
+        // just testing
+         Ok(unsafe { &mut *(host_addr as *mut T) })
+        // Ok(unsafe { std::mem::transmute::<u64, &mut T>(host_addr) })
     } else if !address_is_aligned::<T>(host_addr) {
         Err(SyscallError::UnalignedPointer.into())
     } else {

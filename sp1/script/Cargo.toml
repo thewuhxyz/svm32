@@ -4,7 +4,7 @@ name = "chess-script"
 edition = "2021"
 
 [dependencies]
-sp1-sdk = "4.0.0"
+sp1-sdk = {workspace = true}
 
 [build-dependencies]
-sp1-build = "4.0.0"
+sp1-build = {workspace = true}

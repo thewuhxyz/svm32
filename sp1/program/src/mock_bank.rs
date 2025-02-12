@@ -1,10 +1,16 @@
-// use solana_rbpf::program::SBPFVersion;
 #[allow(deprecated)]
 use solana_sdk::sysvar::recent_blockhashes::{Entry as BlockhashesEntry, RecentBlockhashes};
 use {
+    crate::data::load_program,
     solana_bpf_loader_program::syscalls::{
-        SyscallAbort, SyscallGetClockSysvar, SyscallGetRentSysvar, SyscallInvokeSignedRust,
-        SyscallLog, SyscallMemcpy, SyscallMemset, SyscallSetReturnData,
+        Blake3Hasher, Keccak256Hasher, Sha256Hasher, SyscallAbort, SyscallAllocFree,
+        SyscallAltBn128, SyscallAltBn128Compression, SyscallCreateProgramAddress,
+        SyscallCurveGroupOps, SyscallCurveMultiscalarMultiplication, SyscallCurvePointValidation,
+        SyscallGetClockSysvar, SyscallGetRentSysvar, SyscallGetReturnData, SyscallGetStackHeight,
+        SyscallHash, SyscallInvokeSignedRust, SyscallLog, SyscallLogBpfComputeUnits,
+        SyscallLogData, SyscallLogPubkey, SyscallLogU64, SyscallMemcmp, SyscallMemcpy,
+        SyscallMemmove, SyscallMemset, SyscallPanic, SyscallPoseidon, SyscallRemainingComputeUnits,
+        SyscallSecp256k1Recover, SyscallSetReturnData, SyscallTryFindProgramAddress,
     },
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_feature_set::FeatureSet,
@@ -22,7 +28,7 @@ use {
         account::{AccountSharedData, ReadableAccount, WritableAccount},
         bpf_loader_upgradeable::{self, UpgradeableLoaderState},
         clock::{Clock, UnixTimestamp},
-        compute_budget, native_loader,
+        native_loader,
         pubkey::Pubkey,
         rent::Rent,
         slot_hashes::Slot,
@@ -33,17 +39,9 @@ use {
         transaction_processor::TransactionBatchProcessor,
     },
     solana_type_overrides::sync::{Arc, RwLock},
-    std::{
-        cmp::Ordering,
-        collections::HashMap,
-        env,
-        fs::{self, File},
-        io::Read,
-    },
+    std::{cmp::Ordering, collections::HashMap},
 };
 
-pub const EXECUTION_SLOT: u64 = 5; // The execution slot must be greater than the deployment slot
-pub const EXECUTION_EPOCH: u64 = 2; // The execution epoch must be greater than the deployment epoch
 pub const WALLCLOCK_TIME: i64 = 1704067200; // Arbitrarily Jan 1, 2024
 
 pub struct MockForkGraph {}
@@ -90,7 +88,6 @@ impl TransactionProcessingCallback for MockBankCallback {
 
     fn add_builtin_account(&self, name: &str, program_id: &Pubkey) {
         let account_data = native_loader::create_loadable_account_with_fields(name, (5000, 0));
-
         self.account_shared_data
             .write()
             .unwrap()
@@ -119,44 +116,17 @@ impl MockBankCallback {
 }
 
 #[allow(unused)]
-fn load_program(name: String) -> Vec<u8> {
-    // Loading the program file
-    let mut dir = env::current_dir().unwrap();
-    dir.push("tests");
-    dir.push("example-programs");
-    dir.push(name.as_str());
-    let name = name.replace('-', "_");
-    dir.push(name + "_program.so");
-    let mut file = File::open(dir.clone()).expect("file not found");
-    let metadata = fs::metadata(dir).expect("Unable to read metadata");
-    let mut buffer = vec![0; metadata.len() as usize];
-    file.read_exact(&mut buffer).expect("Buffer overflow");
-    buffer
-}
-
-#[allow(unused)]
 pub fn program_address(program_name: &str) -> Pubkey {
-    Pubkey::create_with_seed(&Pubkey::default(), program_name, &Pubkey::default()).unwrap()
-}
-
-#[allow(unused)]
-pub fn program_data_size(program_name: &str) -> usize {
-    load_program(program_name.to_string()).len()
+    let mut name = program_name;
+    let len = program_name.len();
+    if len > 32 {
+        name = &program_name[0..32];
+    }
+    Pubkey::create_with_seed(&Pubkey::default(), name, &Pubkey::default()).unwrap()
 }
 
 #[allow(unused)]
 pub fn deploy_program(name: String, deployment_slot: Slot, mock_bank: &MockBankCallback) -> Pubkey {
-    deploy_program_with_upgrade_authority(name, deployment_slot, mock_bank, None)
-}
-
-#[allow(unused)]
-pub fn deploy_program_with_upgrade_authority(
-    name: String,
-    deployment_slot: Slot,
-    mock_bank: &MockBankCallback,
-    upgrade_authority_address: Option<Pubkey>,
-) -> Pubkey {
-    let rent = Rent::default();
     let program_account = program_address(&name);
     let program_data_account = bpf_loader_upgradeable::get_program_data_address(&program_account);
 
@@ -166,11 +136,10 @@ pub fn deploy_program_with_upgrade_authority(
 
     // The program account must have funds and hold the executable binary
     let mut account_data = AccountSharedData::default();
-    let buffer = bincode::serialize(&state).unwrap();
-    account_data.set_lamports(rent.minimum_balance(buffer.len()));
+    account_data.set_data(bincode::serialize(&state).unwrap());
+    account_data.set_lamports(25);
     account_data.set_owner(bpf_loader_upgradeable::id());
     account_data.set_executable(true);
-    account_data.set_data(buffer);
     mock_bank
         .account_shared_data
         .write()
@@ -190,11 +159,9 @@ pub fn deploy_program_with_upgrade_authority(
             UpgradeableLoaderState::size_of_programdata_metadata().saturating_sub(header.len())
         )
     ];
-    let mut buffer = load_program(name);
+    let mut buffer = load_program(&name);
     header.append(&mut complement);
-    header.append(&mut buffer);
-    account_data.set_lamports(rent.minimum_balance(header.len()));
-    account_data.set_owner(bpf_loader_upgradeable::id());
+    header.append(&mut buffer.to_vec());
     account_data.set_data(header);
     mock_bank
         .account_shared_data
@@ -204,6 +171,71 @@ pub fn deploy_program_with_upgrade_authority(
 
     program_account
 }
+
+// #[allow(unused)]
+// pub fn create_executable_environment(
+//     fork_graph: Arc<RwLock<MockForkGraph>>,
+//     mock_bank: &MockBankCallback,
+//     program_cache: &mut ProgramCache<MockForkGraph>,
+// ) {
+//     const DEPLOYMENT_EPOCH: u64 = 0;
+//     const DEPLOYMENT_SLOT: u64 = 0;
+
+//     program_cache.environments = ProgramRuntimeEnvironments {
+//         program_runtime_v1: Arc::new(create_custom_environment()),
+//         // We are not using program runtime v2
+//         program_runtime_v2: Arc::new(BuiltinProgram::new_loader(
+//             Config::default(),
+//             FunctionRegistry::default(),
+//         )),
+//     };
+
+//     program_cache.fork_graph = Some(Arc::downgrade(&fork_graph));
+
+//     // We must fill in the sysvar cache entries
+
+//     // clock contents are important because we use them for a sysvar loading test
+//     let clock = Clock {
+//         slot: DEPLOYMENT_SLOT,
+//         epoch_start_timestamp: WALLCLOCK_TIME.saturating_sub(10) as UnixTimestamp,
+//         epoch: DEPLOYMENT_EPOCH,
+//         leader_schedule_epoch: DEPLOYMENT_EPOCH,
+//         unix_timestamp: WALLCLOCK_TIME as UnixTimestamp,
+//     };
+
+//     let mut account_data = AccountSharedData::default();
+//     account_data.set_data(bincode::serialize(&clock).unwrap());
+//     mock_bank
+//         .account_shared_data
+//         .write()
+//         .unwrap()
+//         .insert(Clock::id(), account_data);
+
+//     // default rent is fine
+//     let rent = Rent::default();
+
+//     let mut account_data = AccountSharedData::default();
+//     account_data.set_data(bincode::serialize(&rent).unwrap());
+//     mock_bank
+//         .account_shared_data
+//         .write()
+//         .unwrap()
+//         .insert(Rent::id(), account_data);
+
+//     // SystemInstruction::AdvanceNonceAccount asserts RecentBlockhashes is non-empty
+//     // but then just gets the blockhash from InvokeContext. so the sysvar doesnt need real entries
+//     #[allow(deprecated)]
+//     let recent_blockhashes = vec![BlockhashesEntry::default()];
+
+//     let mut account_data = AccountSharedData::default();
+//     account_data.set_data(bincode::serialize(&recent_blockhashes).unwrap());
+//     #[allow(deprecated)]
+//     mock_bank
+//         .account_shared_data
+//         .write()
+//         .unwrap()
+//         .insert(RecentBlockhashes::id(), account_data);
+// }
 
 #[allow(unused)]
 pub fn create_executable_environment(
@@ -221,6 +253,9 @@ pub fn create_executable_environment(
     };
 
     program_cache.fork_graph = Some(Arc::downgrade(&fork_graph));
+
+    const EXECUTION_SLOT: u64 = 0;
+    const EXECUTION_EPOCH: u64 = 0;
 
     // We must fill in the sysvar cache entries
 
@@ -300,20 +335,6 @@ pub fn register_builtins(
             solana_system_program::system_processor::Entrypoint::vm,
         ),
     );
-
-    // For testing realloc, we need the compute budget program
-    let compute_budget_program_name = "compute_budget_program";
-    batch_processor.add_builtin(
-        mock_bank,
-        compute_budget::id(),
-        compute_budget_program_name,
-        ProgramCacheEntry::new_builtin(
-            DEPLOYMENT_SLOT,
-            compute_budget_program_name.len(),
-            solana_compute_budget_program::Entrypoint::vm,
-            // solana_compute_budget_program::Entrypoint::vm,
-        ),
-    );
 }
 
 #[allow(unused)]
@@ -336,7 +357,6 @@ fn create_custom_environment<'a>() -> BuiltinProgram<InvokeContext<'a>> {
         // enable_sbpf_v1: true,
         // enable_sbpf_v2: false,
         enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V1,
-        // paged_memory_mapping: false,
         optimize_rodata: false,
         aligned_memory_mapping: true,
     };
@@ -356,21 +376,113 @@ fn create_custom_environment<'a>() -> BuiltinProgram<InvokeContext<'a>> {
     function_registry
         .register_function_hashed(*b"sol_memset_", SyscallMemset::vm)
         .expect("Registration failed");
-
     function_registry
         .register_function_hashed(*b"sol_invoke_signed_rust", SyscallInvokeSignedRust::vm)
         .expect("Registration failed");
-
     function_registry
         .register_function_hashed(*b"sol_set_return_data", SyscallSetReturnData::vm)
         .expect("Registration failed");
-
     function_registry
         .register_function_hashed(*b"sol_get_clock_sysvar", SyscallGetClockSysvar::vm)
         .expect("Registration failed");
-
     function_registry
         .register_function_hashed(*b"sol_get_rent_sysvar", SyscallGetRentSysvar::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_alt_bn128_group_op", SyscallAltBn128::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(
+            *b"sol_alt_bn128_compression",
+            SyscallAltBn128Compression::vm,
+        )
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_memmove_", SyscallMemmove::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_memcmp_", SyscallMemcmp::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_alloc_free_", SyscallAllocFree::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_secp256k1_recover", SyscallSecp256k1Recover::vm)
+        .expect("Registration failed");
+
+    // Panic
+    function_registry
+        .register_function_hashed(*b"sol_panic_", SyscallPanic::vm)
+        .expect("Registration failed");
+
+    // Logging
+    function_registry
+        .register_function_hashed(*b"sol_log_64_", SyscallLogU64::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_log_compute_units_", SyscallLogBpfComputeUnits::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_log_pubkey", SyscallLogPubkey::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_log_data", SyscallLogData::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(
+            *b"sol_create_program_address",
+            SyscallCreateProgramAddress::vm,
+        )
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(
+            *b"sol_try_find_program_address",
+            SyscallTryFindProgramAddress::vm,
+        )
+        .expect("Registration failed");
+
+    // Sha256
+    function_registry
+        .register_function_hashed(*b"sol_sha256", SyscallHash::vm::<Sha256Hasher>)
+        .expect("Registration failed");
+
+    // Keccak256
+    function_registry
+        .register_function_hashed(*b"sol_keccak256", SyscallHash::vm::<Keccak256Hasher>)
+        .expect("Registration failed");
+
+    function_registry
+        .register_function_hashed(
+            *b"sol_curve_validate_point",
+            SyscallCurvePointValidation::vm,
+        )
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_curve_group_op", SyscallCurveGroupOps::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(
+            *b"sol_curve_multiscalar_mul",
+            SyscallCurveMultiscalarMultiplication::vm,
+        )
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_poseidon", SyscallPoseidon::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(
+            *b"sol_remaining_compute_units",
+            SyscallRemainingComputeUnits::vm,
+        )
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_blake3", SyscallHash::vm::<Blake3Hasher>)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_get_return_data", SyscallGetReturnData::vm)
+        .expect("Registration failed");
+    function_registry
+        .register_function_hashed(*b"sol_get_stack_height", SyscallGetStackHeight::vm)
         .expect("Registration failed");
 
     BuiltinProgram::new_loader(vm_config, function_registry)
