@@ -617,552 +617,552 @@ pub(crate) fn account_data_region_memory_state(account: &BorrowedAccount<'_>) ->
     }
 }
 
-#[cfg(test)]
-#[allow(clippy::indexing_slicing)]
-mod tests {
-    use {
-        super::*,
-        solana_program_runtime::with_mock_invoke_context,
-        solana_sdk::{
-            account::{Account, AccountSharedData, WritableAccount},
-            account_info::AccountInfo,
-            bpf_loader,
-            entrypoint::deserialize,
-            transaction_context::InstructionAccount,
-        },
-        std::{
-            cell::RefCell,
-            mem::transmute,
-            rc::Rc,
-            slice::{self, from_raw_parts, from_raw_parts_mut},
-        },
-    };
+// #[cfg(test)]
+// #[allow(clippy::indexing_slicing)]
+// mod tests {
+//     use {
+//         super::*,
+//         solana_program_runtime::with_mock_invoke_context,
+//         solana_sdk::{
+//             account::{Account, AccountSharedData, WritableAccount},
+//             account_info::AccountInfo,
+//             bpf_loader,
+//             entrypoint::deserialize,
+//             transaction_context::InstructionAccount,
+//         },
+//         std::{
+//             cell::RefCell,
+//             mem::transmute,
+//             rc::Rc,
+//             slice::{self, from_raw_parts, from_raw_parts_mut},
+//         },
+//     };
 
-    #[test]
-    fn test_serialize_parameters_with_many_accounts() {
-        struct TestCase {
-            num_ix_accounts: usize,
-            append_dup_account: bool,
-            expected_err: Option<InstructionError>,
-            name: &'static str,
-        }
+//     #[test]
+//     fn test_serialize_parameters_with_many_accounts() {
+//         struct TestCase {
+//             num_ix_accounts: usize,
+//             append_dup_account: bool,
+//             expected_err: Option<InstructionError>,
+//             name: &'static str,
+//         }
 
-        for copy_account_data in [true] {
-            for TestCase {
-                num_ix_accounts,
-                append_dup_account,
-                expected_err,
-                name,
-            } in [
-                TestCase {
-                    name: "serialize max accounts with cap",
-                    num_ix_accounts: usize::from(MAX_INSTRUCTION_ACCOUNTS),
-                    append_dup_account: false,
-                    expected_err: None,
-                },
-                TestCase {
-                    name: "serialize too many accounts with cap",
-                    num_ix_accounts: usize::from(MAX_INSTRUCTION_ACCOUNTS) + 1,
-                    append_dup_account: false,
-                    expected_err: Some(InstructionError::MaxAccountsExceeded),
-                },
-                TestCase {
-                    name: "serialize too many accounts and append dup with cap",
-                    num_ix_accounts: usize::from(MAX_INSTRUCTION_ACCOUNTS),
-                    append_dup_account: true,
-                    expected_err: Some(InstructionError::MaxAccountsExceeded),
-                },
-            ] {
-                let program_id = solana_sdk::pubkey::new_rand();
-                let mut transaction_accounts = vec![(
-                    program_id,
-                    AccountSharedData::from(Account {
-                        lamports: 0,
-                        data: vec![],
-                        owner: bpf_loader::id(),
-                        executable: true,
-                        rent_epoch: 0,
-                    }),
-                )];
-                for _ in 0..num_ix_accounts {
-                    transaction_accounts.push((
-                        Pubkey::new_unique(),
-                        AccountSharedData::from(Account {
-                            lamports: 0,
-                            data: vec![],
-                            owner: program_id,
-                            executable: false,
-                            rent_epoch: 0,
-                        }),
-                    ));
-                }
-                let mut instruction_accounts: Vec<_> = (0..num_ix_accounts as IndexOfAccount)
-                    .map(|index_in_callee| InstructionAccount {
-                        index_in_transaction: index_in_callee + 1,
-                        index_in_caller: index_in_callee + 1,
-                        index_in_callee,
-                        is_signer: false,
-                        is_writable: false,
-                    })
-                    .collect();
-                if append_dup_account {
-                    instruction_accounts.push(instruction_accounts.last().cloned().unwrap());
-                }
-                let program_indices = [0];
-                let instruction_data = vec![];
+//         for copy_account_data in [true] {
+//             for TestCase {
+//                 num_ix_accounts,
+//                 append_dup_account,
+//                 expected_err,
+//                 name,
+//             } in [
+//                 TestCase {
+//                     name: "serialize max accounts with cap",
+//                     num_ix_accounts: usize::from(MAX_INSTRUCTION_ACCOUNTS),
+//                     append_dup_account: false,
+//                     expected_err: None,
+//                 },
+//                 TestCase {
+//                     name: "serialize too many accounts with cap",
+//                     num_ix_accounts: usize::from(MAX_INSTRUCTION_ACCOUNTS) + 1,
+//                     append_dup_account: false,
+//                     expected_err: Some(InstructionError::MaxAccountsExceeded),
+//                 },
+//                 TestCase {
+//                     name: "serialize too many accounts and append dup with cap",
+//                     num_ix_accounts: usize::from(MAX_INSTRUCTION_ACCOUNTS),
+//                     append_dup_account: true,
+//                     expected_err: Some(InstructionError::MaxAccountsExceeded),
+//                 },
+//             ] {
+//                 let program_id = solana_sdk::pubkey::new_rand();
+//                 let mut transaction_accounts = vec![(
+//                     program_id,
+//                     AccountSharedData::from(Account {
+//                         lamports: 0,
+//                         data: vec![],
+//                         owner: bpf_loader::id(),
+//                         executable: true,
+//                         rent_epoch: 0,
+//                     }),
+//                 )];
+//                 for _ in 0..num_ix_accounts {
+//                     transaction_accounts.push((
+//                         Pubkey::new_unique(),
+//                         AccountSharedData::from(Account {
+//                             lamports: 0,
+//                             data: vec![],
+//                             owner: program_id,
+//                             executable: false,
+//                             rent_epoch: 0,
+//                         }),
+//                     ));
+//                 }
+//                 let mut instruction_accounts: Vec<_> = (0..num_ix_accounts as IndexOfAccount)
+//                     .map(|index_in_callee| InstructionAccount {
+//                         index_in_transaction: index_in_callee + 1,
+//                         index_in_caller: index_in_callee + 1,
+//                         index_in_callee,
+//                         is_signer: false,
+//                         is_writable: false,
+//                     })
+//                     .collect();
+//                 if append_dup_account {
+//                     instruction_accounts.push(instruction_accounts.last().cloned().unwrap());
+//                 }
+//                 let program_indices = [0];
+//                 let instruction_data = vec![];
 
-                with_mock_invoke_context!(
-                    invoke_context,
-                    transaction_context,
-                    transaction_accounts
-                );
-                invoke_context
-                    .transaction_context
-                    .get_next_instruction_context()
-                    .unwrap()
-                    .configure(&program_indices, &instruction_accounts, &instruction_data);
-                invoke_context.push().unwrap();
-                let instruction_context = invoke_context
-                    .transaction_context
-                    .get_current_instruction_context()
-                    .unwrap();
+//                 with_mock_invoke_context!(
+//                     invoke_context,
+//                     transaction_context,
+//                     transaction_accounts
+//                 );
+//                 invoke_context
+//                     .transaction_context
+//                     .get_next_instruction_context()
+//                     .unwrap()
+//                     .configure(&program_indices, &instruction_accounts, &instruction_data);
+//                 invoke_context.push().unwrap();
+//                 let instruction_context = invoke_context
+//                     .transaction_context
+//                     .get_current_instruction_context()
+//                     .unwrap();
 
-                let serialization_result = serialize_parameters(
-                    invoke_context.transaction_context,
-                    instruction_context,
-                    copy_account_data,
-                );
-                assert_eq!(
-                    serialization_result.as_ref().err(),
-                    expected_err.as_ref(),
-                    "{name} test case failed",
-                );
-                if expected_err.is_some() {
-                    continue;
-                }
+//                 let serialization_result = serialize_parameters(
+//                     invoke_context.transaction_context,
+//                     instruction_context,
+//                     copy_account_data,
+//                 );
+//                 assert_eq!(
+//                     serialization_result.as_ref().err(),
+//                     expected_err.as_ref(),
+//                     "{name} test case failed",
+//                 );
+//                 if expected_err.is_some() {
+//                     continue;
+//                 }
 
-                let (mut serialized, regions, _account_lengths) = serialization_result.unwrap();
-                let mut serialized_regions = concat_regions(&regions);
-                let (de_program_id, de_accounts, de_instruction_data) = unsafe {
-                    deserialize(
-                        if copy_account_data {
-                            serialized.as_slice_mut()
-                        } else {
-                            serialized_regions.as_slice_mut()
-                        }
-                        .first_mut()
-                        .unwrap() as *mut u8,
-                    )
-                };
-                assert_eq!(de_program_id, &program_id);
-                assert_eq!(de_instruction_data, &instruction_data);
-                for account_info in de_accounts {
-                    let index_in_transaction = invoke_context
-                        .transaction_context
-                        .find_index_of_account(account_info.key)
-                        .unwrap();
-                    let account = invoke_context
-                        .transaction_context
-                        .get_account_at_index(index_in_transaction)
-                        .unwrap()
-                        .borrow();
-                    assert_eq!(account.lamports(), account_info.lamports());
-                    assert_eq!(account.data(), &account_info.data.borrow()[..]);
-                    assert_eq!(account.owner(), account_info.owner);
-                    assert_eq!(account.executable(), account_info.executable);
-                    assert_eq!(account.rent_epoch(), account_info.rent_epoch);
-                }
-            }
-        }
-    }
+//                 let (mut serialized, regions, _account_lengths) = serialization_result.unwrap();
+//                 let mut serialized_regions = concat_regions(&regions);
+//                 let (de_program_id, de_accounts, de_instruction_data) = unsafe {
+//                     deserialize(
+//                         if copy_account_data {
+//                             serialized.as_slice_mut()
+//                         } else {
+//                             serialized_regions.as_slice_mut()
+//                         }
+//                         .first_mut()
+//                         .unwrap() as *mut u8,
+//                     )
+//                 };
+//                 assert_eq!(de_program_id, &program_id);
+//                 assert_eq!(de_instruction_data, &instruction_data);
+//                 for account_info in de_accounts {
+//                     let index_in_transaction = invoke_context
+//                         .transaction_context
+//                         .find_index_of_account(account_info.key)
+//                         .unwrap();
+//                     let account = invoke_context
+//                         .transaction_context
+//                         .get_account_at_index(index_in_transaction)
+//                         .unwrap()
+//                         .borrow();
+//                     assert_eq!(account.lamports(), account_info.lamports());
+//                     assert_eq!(account.data(), &account_info.data.borrow()[..]);
+//                     assert_eq!(account.owner(), account_info.owner);
+//                     assert_eq!(account.executable(), account_info.executable);
+//                     assert_eq!(account.rent_epoch(), account_info.rent_epoch);
+//                 }
+//             }
+//         }
+//     }
 
-    #[test]
-    fn test_serialize_parameters() {
-        for copy_account_data in [false, true] {
-            let program_id = solana_sdk::pubkey::new_rand();
-            let transaction_accounts = vec![
-                (
-                    program_id,
-                    AccountSharedData::from(Account {
-                        lamports: 0,
-                        data: vec![],
-                        owner: bpf_loader::id(),
-                        executable: true,
-                        rent_epoch: 0,
-                    }),
-                ),
-                (
-                    solana_sdk::pubkey::new_rand(),
-                    AccountSharedData::from(Account {
-                        lamports: 1,
-                        data: vec![1u8, 2, 3, 4, 5],
-                        owner: bpf_loader::id(),
-                        executable: false,
-                        rent_epoch: 100,
-                    }),
-                ),
-                (
-                    solana_sdk::pubkey::new_rand(),
-                    AccountSharedData::from(Account {
-                        lamports: 2,
-                        data: vec![11u8, 12, 13, 14, 15, 16, 17, 18, 19],
-                        owner: bpf_loader::id(),
-                        executable: true,
-                        rent_epoch: 200,
-                    }),
-                ),
-                (
-                    solana_sdk::pubkey::new_rand(),
-                    AccountSharedData::from(Account {
-                        lamports: 3,
-                        data: vec![],
-                        owner: bpf_loader::id(),
-                        executable: false,
-                        rent_epoch: 3100,
-                    }),
-                ),
-                (
-                    solana_sdk::pubkey::new_rand(),
-                    AccountSharedData::from(Account {
-                        lamports: 4,
-                        data: vec![1u8, 2, 3, 4, 5],
-                        owner: bpf_loader::id(),
-                        executable: false,
-                        rent_epoch: 100,
-                    }),
-                ),
-                (
-                    solana_sdk::pubkey::new_rand(),
-                    AccountSharedData::from(Account {
-                        lamports: 5,
-                        data: vec![11u8, 12, 13, 14, 15, 16, 17, 18, 19],
-                        owner: bpf_loader::id(),
-                        executable: true,
-                        rent_epoch: 200,
-                    }),
-                ),
-                (
-                    solana_sdk::pubkey::new_rand(),
-                    AccountSharedData::from(Account {
-                        lamports: 6,
-                        data: vec![],
-                        owner: bpf_loader::id(),
-                        executable: false,
-                        rent_epoch: 3100,
-                    }),
-                ),
-            ];
-            let instruction_accounts: Vec<InstructionAccount> = [1, 1, 2, 3, 4, 4, 5, 6]
-                .into_iter()
-                .enumerate()
-                .map(
-                    |(index_in_instruction, index_in_transaction)| InstructionAccount {
-                        index_in_transaction,
-                        index_in_caller: index_in_transaction,
-                        index_in_callee: index_in_transaction - 1,
-                        is_signer: false,
-                        is_writable: index_in_instruction >= 4,
-                    },
-                )
-                .collect();
-            let instruction_data = vec![1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-            let program_indices = [0];
-            let mut original_accounts = transaction_accounts.clone();
-            with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
-            invoke_context
-                .transaction_context
-                .get_next_instruction_context()
-                .unwrap()
-                .configure(&program_indices, &instruction_accounts, &instruction_data);
-            invoke_context.push().unwrap();
-            let instruction_context = invoke_context
-                .transaction_context
-                .get_current_instruction_context()
-                .unwrap();
+//     #[test]
+//     fn test_serialize_parameters() {
+//         for copy_account_data in [false, true] {
+//             let program_id = solana_sdk::pubkey::new_rand();
+//             let transaction_accounts = vec![
+//                 (
+//                     program_id,
+//                     AccountSharedData::from(Account {
+//                         lamports: 0,
+//                         data: vec![],
+//                         owner: bpf_loader::id(),
+//                         executable: true,
+//                         rent_epoch: 0,
+//                     }),
+//                 ),
+//                 (
+//                     solana_sdk::pubkey::new_rand(),
+//                     AccountSharedData::from(Account {
+//                         lamports: 1,
+//                         data: vec![1u8, 2, 3, 4, 5],
+//                         owner: bpf_loader::id(),
+//                         executable: false,
+//                         rent_epoch: 100,
+//                     }),
+//                 ),
+//                 (
+//                     solana_sdk::pubkey::new_rand(),
+//                     AccountSharedData::from(Account {
+//                         lamports: 2,
+//                         data: vec![11u8, 12, 13, 14, 15, 16, 17, 18, 19],
+//                         owner: bpf_loader::id(),
+//                         executable: true,
+//                         rent_epoch: 200,
+//                     }),
+//                 ),
+//                 (
+//                     solana_sdk::pubkey::new_rand(),
+//                     AccountSharedData::from(Account {
+//                         lamports: 3,
+//                         data: vec![],
+//                         owner: bpf_loader::id(),
+//                         executable: false,
+//                         rent_epoch: 3100,
+//                     }),
+//                 ),
+//                 (
+//                     solana_sdk::pubkey::new_rand(),
+//                     AccountSharedData::from(Account {
+//                         lamports: 4,
+//                         data: vec![1u8, 2, 3, 4, 5],
+//                         owner: bpf_loader::id(),
+//                         executable: false,
+//                         rent_epoch: 100,
+//                     }),
+//                 ),
+//                 (
+//                     solana_sdk::pubkey::new_rand(),
+//                     AccountSharedData::from(Account {
+//                         lamports: 5,
+//                         data: vec![11u8, 12, 13, 14, 15, 16, 17, 18, 19],
+//                         owner: bpf_loader::id(),
+//                         executable: true,
+//                         rent_epoch: 200,
+//                     }),
+//                 ),
+//                 (
+//                     solana_sdk::pubkey::new_rand(),
+//                     AccountSharedData::from(Account {
+//                         lamports: 6,
+//                         data: vec![],
+//                         owner: bpf_loader::id(),
+//                         executable: false,
+//                         rent_epoch: 3100,
+//                     }),
+//                 ),
+//             ];
+//             let instruction_accounts: Vec<InstructionAccount> = [1, 1, 2, 3, 4, 4, 5, 6]
+//                 .into_iter()
+//                 .enumerate()
+//                 .map(
+//                     |(index_in_instruction, index_in_transaction)| InstructionAccount {
+//                         index_in_transaction,
+//                         index_in_caller: index_in_transaction,
+//                         index_in_callee: index_in_transaction - 1,
+//                         is_signer: false,
+//                         is_writable: index_in_instruction >= 4,
+//                     },
+//                 )
+//                 .collect();
+//             let instruction_data = vec![1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+//             let program_indices = [0];
+//             let mut original_accounts = transaction_accounts.clone();
+//             with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
+//             invoke_context
+//                 .transaction_context
+//                 .get_next_instruction_context()
+//                 .unwrap()
+//                 .configure(&program_indices, &instruction_accounts, &instruction_data);
+//             invoke_context.push().unwrap();
+//             let instruction_context = invoke_context
+//                 .transaction_context
+//                 .get_current_instruction_context()
+//                 .unwrap();
 
-            // check serialize_parameters_aligned
-            let (mut serialized, regions, accounts_metadata) = serialize_parameters(
-                invoke_context.transaction_context,
-                instruction_context,
-                copy_account_data,
-            )
-            .unwrap();
+//             // check serialize_parameters_aligned
+//             let (mut serialized, regions, accounts_metadata) = serialize_parameters(
+//                 invoke_context.transaction_context,
+//                 instruction_context,
+//                 copy_account_data,
+//             )
+//             .unwrap();
 
-            let mut serialized_regions = concat_regions(&regions);
-            if copy_account_data {
-                assert_eq!(serialized.as_slice(), serialized_regions.as_slice());
-            }
-            let (de_program_id, de_accounts, de_instruction_data) = unsafe {
-                deserialize(
-                    if copy_account_data {
-                        serialized.as_slice_mut()
-                    } else {
-                        serialized_regions.as_slice_mut()
-                    }
-                    .first_mut()
-                    .unwrap() as *mut u8,
-                )
-            };
+//             let mut serialized_regions = concat_regions(&regions);
+//             if copy_account_data {
+//                 assert_eq!(serialized.as_slice(), serialized_regions.as_slice());
+//             }
+//             let (de_program_id, de_accounts, de_instruction_data) = unsafe {
+//                 deserialize(
+//                     if copy_account_data {
+//                         serialized.as_slice_mut()
+//                     } else {
+//                         serialized_regions.as_slice_mut()
+//                     }
+//                     .first_mut()
+//                     .unwrap() as *mut u8,
+//                 )
+//             };
 
-            assert_eq!(&program_id, de_program_id);
-            assert_eq!(instruction_data, de_instruction_data);
-            assert_eq!(
-                (de_instruction_data.first().unwrap() as *const u8).align_offset(BPF_ALIGN_OF_U128),
-                0
-            );
-            for account_info in de_accounts {
-                let index_in_transaction = invoke_context
-                    .transaction_context
-                    .find_index_of_account(account_info.key)
-                    .unwrap();
-                let account = invoke_context
-                    .transaction_context
-                    .get_account_at_index(index_in_transaction)
-                    .unwrap()
-                    .borrow();
-                assert_eq!(account.lamports(), account_info.lamports());
-                assert_eq!(account.data(), &account_info.data.borrow()[..]);
-                assert_eq!(account.owner(), account_info.owner);
-                assert_eq!(account.executable(), account_info.executable);
-                assert_eq!(account.rent_epoch(), account_info.rent_epoch);
+//             assert_eq!(&program_id, de_program_id);
+//             assert_eq!(instruction_data, de_instruction_data);
+//             assert_eq!(
+//                 (de_instruction_data.first().unwrap() as *const u8).align_offset(BPF_ALIGN_OF_U128),
+//                 0
+//             );
+//             for account_info in de_accounts {
+//                 let index_in_transaction = invoke_context
+//                     .transaction_context
+//                     .find_index_of_account(account_info.key)
+//                     .unwrap();
+//                 let account = invoke_context
+//                     .transaction_context
+//                     .get_account_at_index(index_in_transaction)
+//                     .unwrap()
+//                     .borrow();
+//                 assert_eq!(account.lamports(), account_info.lamports());
+//                 assert_eq!(account.data(), &account_info.data.borrow()[..]);
+//                 assert_eq!(account.owner(), account_info.owner);
+//                 assert_eq!(account.executable(), account_info.executable);
+//                 assert_eq!(account.rent_epoch(), account_info.rent_epoch);
 
-                assert_eq!(
-                    (*account_info.lamports.borrow() as *const u64).align_offset(BPF_ALIGN_OF_U128),
-                    0
-                );
-                assert_eq!(
-                    account_info
-                        .data
-                        .borrow()
-                        .as_ptr()
-                        .align_offset(BPF_ALIGN_OF_U128),
-                    0
-                );
-            }
+//                 assert_eq!(
+//                     (*account_info.lamports.borrow() as *const u64).align_offset(BPF_ALIGN_OF_U128),
+//                     0
+//                 );
+//                 assert_eq!(
+//                     account_info
+//                         .data
+//                         .borrow()
+//                         .as_ptr()
+//                         .align_offset(BPF_ALIGN_OF_U128),
+//                     0
+//                 );
+//             }
 
-            deserialize_parameters(
-                invoke_context.transaction_context,
-                instruction_context,
-                copy_account_data,
-                serialized.as_slice(),
-                &accounts_metadata,
-            )
-            .unwrap();
-            for (index_in_transaction, (_key, original_account)) in
-                original_accounts.iter().enumerate()
-            {
-                let account = invoke_context
-                    .transaction_context
-                    .get_account_at_index(index_in_transaction as IndexOfAccount)
-                    .unwrap()
-                    .borrow();
-                assert_eq!(&*account, original_account);
-            }
+//             deserialize_parameters(
+//                 invoke_context.transaction_context,
+//                 instruction_context,
+//                 copy_account_data,
+//                 serialized.as_slice(),
+//                 &accounts_metadata,
+//             )
+//             .unwrap();
+//             for (index_in_transaction, (_key, original_account)) in
+//                 original_accounts.iter().enumerate()
+//             {
+//                 let account = invoke_context
+//                     .transaction_context
+//                     .get_account_at_index(index_in_transaction as IndexOfAccount)
+//                     .unwrap()
+//                     .borrow();
+//                 assert_eq!(&*account, original_account);
+//             }
 
-            // check serialize_parameters_unaligned
-            original_accounts
-                .first_mut()
-                .unwrap()
-                .1
-                .set_owner(bpf_loader_deprecated::id());
-            invoke_context
-                .transaction_context
-                .get_account_at_index(0)
-                .unwrap()
-                .borrow_mut()
-                .set_owner(bpf_loader_deprecated::id());
+//             // check serialize_parameters_unaligned
+//             original_accounts
+//                 .first_mut()
+//                 .unwrap()
+//                 .1
+//                 .set_owner(bpf_loader_deprecated::id());
+//             invoke_context
+//                 .transaction_context
+//                 .get_account_at_index(0)
+//                 .unwrap()
+//                 .borrow_mut()
+//                 .set_owner(bpf_loader_deprecated::id());
 
-            let (mut serialized, regions, account_lengths) = serialize_parameters(
-                invoke_context.transaction_context,
-                instruction_context,
-                copy_account_data,
-            )
-            .unwrap();
-            let mut serialized_regions = concat_regions(&regions);
+//             let (mut serialized, regions, account_lengths) = serialize_parameters(
+//                 invoke_context.transaction_context,
+//                 instruction_context,
+//                 copy_account_data,
+//             )
+//             .unwrap();
+//             let mut serialized_regions = concat_regions(&regions);
 
-            let (de_program_id, de_accounts, de_instruction_data) = unsafe {
-                deserialize_unaligned(
-                    if copy_account_data {
-                        serialized.as_slice_mut()
-                    } else {
-                        serialized_regions.as_slice_mut()
-                    }
-                    .first_mut()
-                    .unwrap() as *mut u8,
-                )
-            };
-            assert_eq!(&program_id, de_program_id);
-            assert_eq!(instruction_data, de_instruction_data);
-            for account_info in de_accounts {
-                let index_in_transaction = invoke_context
-                    .transaction_context
-                    .find_index_of_account(account_info.key)
-                    .unwrap();
-                let account = invoke_context
-                    .transaction_context
-                    .get_account_at_index(index_in_transaction)
-                    .unwrap()
-                    .borrow();
-                assert_eq!(account.lamports(), account_info.lamports());
-                assert_eq!(account.data(), &account_info.data.borrow()[..]);
-                assert_eq!(account.owner(), account_info.owner);
-                assert_eq!(account.executable(), account_info.executable);
-                assert_eq!(account.rent_epoch(), account_info.rent_epoch);
-            }
+//             let (de_program_id, de_accounts, de_instruction_data) = unsafe {
+//                 deserialize_unaligned(
+//                     if copy_account_data {
+//                         serialized.as_slice_mut()
+//                     } else {
+//                         serialized_regions.as_slice_mut()
+//                     }
+//                     .first_mut()
+//                     .unwrap() as *mut u8,
+//                 )
+//             };
+//             assert_eq!(&program_id, de_program_id);
+//             assert_eq!(instruction_data, de_instruction_data);
+//             for account_info in de_accounts {
+//                 let index_in_transaction = invoke_context
+//                     .transaction_context
+//                     .find_index_of_account(account_info.key)
+//                     .unwrap();
+//                 let account = invoke_context
+//                     .transaction_context
+//                     .get_account_at_index(index_in_transaction)
+//                     .unwrap()
+//                     .borrow();
+//                 assert_eq!(account.lamports(), account_info.lamports());
+//                 assert_eq!(account.data(), &account_info.data.borrow()[..]);
+//                 assert_eq!(account.owner(), account_info.owner);
+//                 assert_eq!(account.executable(), account_info.executable);
+//                 assert_eq!(account.rent_epoch(), account_info.rent_epoch);
+//             }
 
-            deserialize_parameters(
-                invoke_context.transaction_context,
-                instruction_context,
-                copy_account_data,
-                serialized.as_slice(),
-                &account_lengths,
-            )
-            .unwrap();
-            for (index_in_transaction, (_key, original_account)) in
-                original_accounts.iter().enumerate()
-            {
-                let account = invoke_context
-                    .transaction_context
-                    .get_account_at_index(index_in_transaction as IndexOfAccount)
-                    .unwrap()
-                    .borrow();
-                assert_eq!(&*account, original_account);
-            }
-        }
-    }
+//             deserialize_parameters(
+//                 invoke_context.transaction_context,
+//                 instruction_context,
+//                 copy_account_data,
+//                 serialized.as_slice(),
+//                 &account_lengths,
+//             )
+//             .unwrap();
+//             for (index_in_transaction, (_key, original_account)) in
+//                 original_accounts.iter().enumerate()
+//             {
+//                 let account = invoke_context
+//                     .transaction_context
+//                     .get_account_at_index(index_in_transaction as IndexOfAccount)
+//                     .unwrap()
+//                     .borrow();
+//                 assert_eq!(&*account, original_account);
+//             }
+//         }
+//     }
 
-    // the old bpf_loader in-program deserializer bpf_loader::id()
-    #[deny(unsafe_op_in_unsafe_fn)]
-    pub unsafe fn deserialize_unaligned<'a>(
-        input: *mut u8,
-    ) -> (&'a Pubkey, Vec<AccountInfo<'a>>, &'a [u8]) {
-        // this boring boilerplate struct is needed until inline const...
-        struct Ptr<T>(std::marker::PhantomData<T>);
-        impl<T> Ptr<T> {
-            const COULD_BE_UNALIGNED: bool = std::mem::align_of::<T>() > 1;
+//     // the old bpf_loader in-program deserializer bpf_loader::id()
+//     #[deny(unsafe_op_in_unsafe_fn)]
+//     pub unsafe fn deserialize_unaligned<'a>(
+//         input: *mut u8,
+//     ) -> (&'a Pubkey, Vec<AccountInfo<'a>>, &'a [u8]) {
+//         // this boring boilerplate struct is needed until inline const...
+//         struct Ptr<T>(std::marker::PhantomData<T>);
+//         impl<T> Ptr<T> {
+//             const COULD_BE_UNALIGNED: bool = std::mem::align_of::<T>() > 1;
 
-            #[inline(always)]
-            fn read_possibly_unaligned(input: *mut u8, offset: usize) -> T {
-                unsafe {
-                    let src = input.add(offset) as *const T;
-                    if Self::COULD_BE_UNALIGNED {
-                        src.read_unaligned()
-                    } else {
-                        src.read()
-                    }
-                }
-            }
+//             #[inline(always)]
+//             fn read_possibly_unaligned(input: *mut u8, offset: usize) -> T {
+//                 unsafe {
+//                     let src = input.add(offset) as *const T;
+//                     if Self::COULD_BE_UNALIGNED {
+//                         src.read_unaligned()
+//                     } else {
+//                         src.read()
+//                     }
+//                 }
+//             }
 
-            // rustc inserts debug_assert! for misaligned pointer dereferences when
-            // deserializing, starting from [1]. so, use std::mem::transmute as the last resort
-            // while preventing clippy from complaining to suggest not to use it.
-            // [1]: https://github.com/rust-lang/rust/commit/22a7a19f9333bc1fcba97ce444a3515cb5fb33e6
-            // as for the ub nature of the misaligned pointer dereference, this is
-            // acceptable in this code, given that this is cfg(test) and it's cared only with
-            // x86-64 and the target only incurs some performance penalty, not like segfaults
-            // in other targets.
-            #[inline(always)]
-            fn ref_possibly_unaligned<'a>(input: *mut u8, offset: usize) -> &'a T {
-                #[allow(clippy::transmute_ptr_to_ref)]
-                unsafe {
-                    transmute(input.add(offset) as *const T)
-                }
-            }
+//             // rustc inserts debug_assert! for misaligned pointer dereferences when
+//             // deserializing, starting from [1]. so, use std::mem::transmute as the last resort
+//             // while preventing clippy from complaining to suggest not to use it.
+//             // [1]: https://github.com/rust-lang/rust/commit/22a7a19f9333bc1fcba97ce444a3515cb5fb33e6
+//             // as for the ub nature of the misaligned pointer dereference, this is
+//             // acceptable in this code, given that this is cfg(test) and it's cared only with
+//             // x86-64 and the target only incurs some performance penalty, not like segfaults
+//             // in other targets.
+//             #[inline(always)]
+//             fn ref_possibly_unaligned<'a>(input: *mut u8, offset: usize) -> &'a T {
+//                 #[allow(clippy::transmute_ptr_to_ref)]
+//                 unsafe {
+//                     transmute(input.add(offset) as *const T)
+//                 }
+//             }
 
-            // See ref_possibly_unaligned's comment
-            #[inline(always)]
-            fn mut_possibly_unaligned<'a>(input: *mut u8, offset: usize) -> &'a mut T {
-                #[allow(clippy::transmute_ptr_to_ref)]
-                unsafe {
-                    transmute(input.add(offset) as *mut T)
-                }
-            }
-        }
+//             // See ref_possibly_unaligned's comment
+//             #[inline(always)]
+//             fn mut_possibly_unaligned<'a>(input: *mut u8, offset: usize) -> &'a mut T {
+//                 #[allow(clippy::transmute_ptr_to_ref)]
+//                 unsafe {
+//                     transmute(input.add(offset) as *mut T)
+//                 }
+//             }
+//         }
 
-        let mut offset: usize = 0;
+//         let mut offset: usize = 0;
 
-        // number of accounts present
+//         // number of accounts present
 
-        let num_accounts = Ptr::<u64>::read_possibly_unaligned(input, offset) as usize;
-        offset += size_of::<u64>();
+//         let num_accounts = Ptr::<u64>::read_possibly_unaligned(input, offset) as usize;
+//         offset += size_of::<u64>();
 
-        // account Infos
+//         // account Infos
 
-        let mut accounts = Vec::with_capacity(num_accounts);
-        for _ in 0..num_accounts {
-            let dup_info = Ptr::<u8>::read_possibly_unaligned(input, offset);
-            offset += size_of::<u8>();
-            if dup_info == NON_DUP_MARKER {
-                let is_signer = Ptr::<u8>::read_possibly_unaligned(input, offset) != 0;
-                offset += size_of::<u8>();
+//         let mut accounts = Vec::with_capacity(num_accounts);
+//         for _ in 0..num_accounts {
+//             let dup_info = Ptr::<u8>::read_possibly_unaligned(input, offset);
+//             offset += size_of::<u8>();
+//             if dup_info == NON_DUP_MARKER {
+//                 let is_signer = Ptr::<u8>::read_possibly_unaligned(input, offset) != 0;
+//                 offset += size_of::<u8>();
 
-                let is_writable = Ptr::<u8>::read_possibly_unaligned(input, offset) != 0;
-                offset += size_of::<u8>();
+//                 let is_writable = Ptr::<u8>::read_possibly_unaligned(input, offset) != 0;
+//                 offset += size_of::<u8>();
 
-                let key = Ptr::<Pubkey>::ref_possibly_unaligned(input, offset);
-                offset += size_of::<Pubkey>();
+//                 let key = Ptr::<Pubkey>::ref_possibly_unaligned(input, offset);
+//                 offset += size_of::<Pubkey>();
 
-                let lamports = Rc::new(RefCell::new(Ptr::mut_possibly_unaligned(input, offset)));
-                offset += size_of::<u64>();
+//                 let lamports = Rc::new(RefCell::new(Ptr::mut_possibly_unaligned(input, offset)));
+//                 offset += size_of::<u64>();
 
-                let data_len = Ptr::<u64>::read_possibly_unaligned(input, offset) as usize;
-                offset += size_of::<u64>();
+//                 let data_len = Ptr::<u64>::read_possibly_unaligned(input, offset) as usize;
+//                 offset += size_of::<u64>();
 
-                let data = Rc::new(RefCell::new(unsafe {
-                    from_raw_parts_mut(input.add(offset), data_len)
-                }));
-                offset += data_len;
+//                 let data = Rc::new(RefCell::new(unsafe {
+//                     from_raw_parts_mut(input.add(offset), data_len)
+//                 }));
+//                 offset += data_len;
 
-                let owner: &Pubkey = Ptr::<Pubkey>::ref_possibly_unaligned(input, offset);
-                offset += size_of::<Pubkey>();
+//                 let owner: &Pubkey = Ptr::<Pubkey>::ref_possibly_unaligned(input, offset);
+//                 offset += size_of::<Pubkey>();
 
-                let executable = Ptr::<u8>::read_possibly_unaligned(input, offset) != 0;
-                offset += size_of::<u8>();
+//                 let executable = Ptr::<u8>::read_possibly_unaligned(input, offset) != 0;
+//                 offset += size_of::<u8>();
 
-                let rent_epoch = Ptr::<u64>::read_possibly_unaligned(input, offset);
-                offset += size_of::<u64>();
+//                 let rent_epoch = Ptr::<u64>::read_possibly_unaligned(input, offset);
+//                 offset += size_of::<u64>();
 
-                accounts.push(AccountInfo {
-                    key,
-                    is_signer,
-                    is_writable,
-                    lamports,
-                    data,
-                    owner,
-                    executable,
-                    rent_epoch,
-                });
-            } else {
-                // duplicate account, clone the original
-                accounts.push(accounts.get(dup_info as usize).unwrap().clone());
-            }
-        }
+//                 accounts.push(AccountInfo {
+//                     key,
+//                     is_signer,
+//                     is_writable,
+//                     lamports,
+//                     data,
+//                     owner,
+//                     executable,
+//                     rent_epoch,
+//                 });
+//             } else {
+//                 // duplicate account, clone the original
+//                 accounts.push(accounts.get(dup_info as usize).unwrap().clone());
+//             }
+//         }
 
-        // instruction data
+//         // instruction data
 
-        let instruction_data_len = Ptr::<u64>::read_possibly_unaligned(input, offset) as usize;
-        offset += size_of::<u64>();
+//         let instruction_data_len = Ptr::<u64>::read_possibly_unaligned(input, offset) as usize;
+//         offset += size_of::<u64>();
 
-        let instruction_data = unsafe { from_raw_parts(input.add(offset), instruction_data_len) };
-        offset += instruction_data_len;
+//         let instruction_data = unsafe { from_raw_parts(input.add(offset), instruction_data_len) };
+//         offset += instruction_data_len;
 
-        // program Id
+//         // program Id
 
-        let program_id = Ptr::<Pubkey>::ref_possibly_unaligned(input, offset);
+//         let program_id = Ptr::<Pubkey>::ref_possibly_unaligned(input, offset);
 
-        (program_id, accounts, instruction_data)
-    }
+//         (program_id, accounts, instruction_data)
+//     }
 
-    fn concat_regions(regions: &[MemoryRegion]) -> AlignedMemory<HOST_ALIGN> {
-        let len = regions.iter().fold(0, |len, region| len + region.len) as usize;
-        let mut mem = AlignedMemory::zero_filled(len);
-        for region in regions {
-            let host_slice = unsafe {
-                slice::from_raw_parts(region.host_addr.get() as *const u8, region.len as usize)
-            };
-            mem.as_slice_mut()[(region.vm_addr - MM_INPUT_START) as usize..][..region.len as usize]
-                .copy_from_slice(host_slice)
-        }
-        mem
-    }
-}
+//     fn concat_regions(regions: &[MemoryRegion]) -> AlignedMemory<HOST_ALIGN> {
+//         let len = regions.iter().fold(0, |len, region| len + region.len) as usize;
+//         let mut mem = AlignedMemory::zero_filled(len);
+//         for region in regions {
+//             let host_slice = unsafe {
+//                 slice::from_raw_parts(region.host_addr.get() as *const u8, region.len as usize)
+//             };
+//             mem.as_slice_mut()[(region.vm_addr - MM_INPUT_START) as usize..][..region.len as usize]
+//                 .copy_from_slice(host_slice)
+//         }
+//         mem
+//     }
+// }

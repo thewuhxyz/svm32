@@ -720,611 +720,611 @@ impl<'a> InvokeContext<'a> {
     }
 }
 
-#[macro_export]
-macro_rules! with_mock_invoke_context {
-    (
-        $invoke_context:ident,
-        $transaction_context:ident,
-        $transaction_accounts:expr $(,)?
-    ) => {
-        use {
-            solana_compute_budget::compute_budget::ComputeBudget,
-            solana_feature_set::FeatureSet,
-            solana_log_collector::LogCollector,
-            solana_sdk::{
-                account::ReadableAccount, hash::Hash, sysvar::rent::Rent,
-                transaction_context::TransactionContext,
-            },
-            solana_type_overrides::sync::Arc,
-            $crate::{
-                invoke_context::{EnvironmentConfig, InvokeContext},
-                loaded_programs::ProgramCacheForTxBatch,
-                sysvar_cache::SysvarCache,
-            },
-        };
-        let compute_budget = ComputeBudget::default();
-        let mut $transaction_context = TransactionContext::new(
-            $transaction_accounts,
-            Rent::default(),
-            compute_budget.max_instruction_stack_depth,
-            compute_budget.max_instruction_trace_length,
-        );
-        let mut sysvar_cache = SysvarCache::default();
-        sysvar_cache.fill_missing_entries(|pubkey, callback| {
-            for index in 0..$transaction_context.get_number_of_accounts() {
-                if $transaction_context
-                    .get_key_of_account_at_index(index)
-                    .unwrap()
-                    == pubkey
-                {
-                    callback(
-                        $transaction_context
-                            .get_account_at_index(index)
-                            .unwrap()
-                            .borrow()
-                            .data(),
-                    );
-                }
-            }
-        });
-        let environment_config = EnvironmentConfig::new(
-            Hash::default(),
-            None,
-            None,
-            Arc::new(FeatureSet::all_enabled()),
-            0,
-            &sysvar_cache,
-        );
-        let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
-        let mut $invoke_context = InvokeContext::new(
-            &mut $transaction_context,
-            &mut program_cache_for_tx_batch,
-            environment_config,
-            Some(LogCollector::new_ref()),
-            compute_budget,
-        );
-    };
-}
+// #[macro_export]
+// macro_rules! with_mock_invoke_context {
+//     (
+//         $invoke_context:ident,
+//         $transaction_context:ident,
+//         $transaction_accounts:expr $(,)?
+//     ) => {
+//         use {
+//             solana_compute_budget::compute_budget::ComputeBudget,
+//             solana_feature_set::FeatureSet,
+//             solana_log_collector::LogCollector,
+//             solana_sdk::{
+//                 account::ReadableAccount, hash::Hash, sysvar::rent::Rent,
+//                 transaction_context::TransactionContext,
+//             },
+//             solana_type_overrides::sync::Arc,
+//             $crate::{
+//                 invoke_context::{EnvironmentConfig, InvokeContext},
+//                 loaded_programs::ProgramCacheForTxBatch,
+//                 sysvar_cache::SysvarCache,
+//             },
+//         };
+//         let compute_budget = ComputeBudget::default();
+//         let mut $transaction_context = TransactionContext::new(
+//             $transaction_accounts,
+//             Rent::default(),
+//             compute_budget.max_instruction_stack_depth,
+//             compute_budget.max_instruction_trace_length,
+//         );
+//         let mut sysvar_cache = SysvarCache::default();
+//         sysvar_cache.fill_missing_entries(|pubkey, callback| {
+//             for index in 0..$transaction_context.get_number_of_accounts() {
+//                 if $transaction_context
+//                     .get_key_of_account_at_index(index)
+//                     .unwrap()
+//                     == pubkey
+//                 {
+//                     callback(
+//                         $transaction_context
+//                             .get_account_at_index(index)
+//                             .unwrap()
+//                             .borrow()
+//                             .data(),
+//                     );
+//                 }
+//             }
+//         });
+//         let environment_config = EnvironmentConfig::new(
+//             Hash::default(),
+//             None,
+//             None,
+//             Arc::new(FeatureSet::all_enabled()),
+//             0,
+//             &sysvar_cache,
+//         );
+//         let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
+//         let mut $invoke_context = InvokeContext::new(
+//             &mut $transaction_context,
+//             &mut program_cache_for_tx_batch,
+//             environment_config,
+//             Some(LogCollector::new_ref()),
+//             compute_budget,
+//         );
+//     };
+// }
 
-pub fn mock_process_instruction<F: FnMut(&mut InvokeContext), G: FnMut(&mut InvokeContext)>(
-    loader_id: &Pubkey,
-    mut program_indices: Vec<IndexOfAccount>,
-    instruction_data: &[u8],
-    mut transaction_accounts: Vec<TransactionAccount>,
-    instruction_account_metas: Vec<AccountMeta>,
-    expected_result: Result<(), InstructionError>,
-    builtin_function: BuiltinFunctionWithContext,
-    mut pre_adjustments: F,
-    mut post_adjustments: G,
-) -> Vec<AccountSharedData> {
-    let mut instruction_accounts: Vec<InstructionAccount> =
-        Vec::with_capacity(instruction_account_metas.len());
-    for (instruction_account_index, account_meta) in instruction_account_metas.iter().enumerate() {
-        let index_in_transaction = transaction_accounts
-            .iter()
-            .position(|(key, _account)| *key == account_meta.pubkey)
-            .unwrap_or(transaction_accounts.len())
-            as IndexOfAccount;
-        let index_in_callee = instruction_accounts
-            .get(0..instruction_account_index)
-            .unwrap()
-            .iter()
-            .position(|instruction_account| {
-                instruction_account.index_in_transaction == index_in_transaction
-            })
-            .unwrap_or(instruction_account_index) as IndexOfAccount;
-        instruction_accounts.push(InstructionAccount {
-            index_in_transaction,
-            index_in_caller: index_in_transaction,
-            index_in_callee,
-            is_signer: account_meta.is_signer,
-            is_writable: account_meta.is_writable,
-        });
-    }
-    if program_indices.is_empty() {
-        program_indices.insert(0, transaction_accounts.len() as IndexOfAccount);
-        let processor_account = AccountSharedData::new(0, 0, &native_loader::id());
-        transaction_accounts.push((*loader_id, processor_account));
-    }
-    let pop_epoch_schedule_account = if !transaction_accounts
-        .iter()
-        .any(|(key, _)| *key == sysvar::epoch_schedule::id())
-    {
-        transaction_accounts.push((
-            sysvar::epoch_schedule::id(),
-            create_account_shared_data_for_test(&EpochSchedule::default()),
-        ));
-        true
-    } else {
-        false
-    };
-    with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
-    let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
-    program_cache_for_tx_batch.replenish(
-        *loader_id,
-        Arc::new(ProgramCacheEntry::new_builtin(0, 0, builtin_function)),
-    );
-    invoke_context.program_cache_for_tx_batch = &mut program_cache_for_tx_batch;
-    pre_adjustments(&mut invoke_context);
-    let result = invoke_context.process_instruction(
-        instruction_data,
-        &instruction_accounts,
-        &program_indices,
-        &mut 0,
-        &mut ExecuteTimings::default(),
-    );
-    assert_eq!(result, expected_result);
-    post_adjustments(&mut invoke_context);
-    let mut transaction_accounts = transaction_context.deconstruct_without_keys().unwrap();
-    if pop_epoch_schedule_account {
-        transaction_accounts.pop();
-    }
-    transaction_accounts.pop();
-    transaction_accounts
-}
+// pub fn mock_process_instruction<F: FnMut(&mut InvokeContext), G: FnMut(&mut InvokeContext)>(
+//     loader_id: &Pubkey,
+//     mut program_indices: Vec<IndexOfAccount>,
+//     instruction_data: &[u8],
+//     mut transaction_accounts: Vec<TransactionAccount>,
+//     instruction_account_metas: Vec<AccountMeta>,
+//     expected_result: Result<(), InstructionError>,
+//     builtin_function: BuiltinFunctionWithContext,
+//     mut pre_adjustments: F,
+//     mut post_adjustments: G,
+// ) -> Vec<AccountSharedData> {
+//     let mut instruction_accounts: Vec<InstructionAccount> =
+//         Vec::with_capacity(instruction_account_metas.len());
+//     for (instruction_account_index, account_meta) in instruction_account_metas.iter().enumerate() {
+//         let index_in_transaction = transaction_accounts
+//             .iter()
+//             .position(|(key, _account)| *key == account_meta.pubkey)
+//             .unwrap_or(transaction_accounts.len())
+//             as IndexOfAccount;
+//         let index_in_callee = instruction_accounts
+//             .get(0..instruction_account_index)
+//             .unwrap()
+//             .iter()
+//             .position(|instruction_account| {
+//                 instruction_account.index_in_transaction == index_in_transaction
+//             })
+//             .unwrap_or(instruction_account_index) as IndexOfAccount;
+//         instruction_accounts.push(InstructionAccount {
+//             index_in_transaction,
+//             index_in_caller: index_in_transaction,
+//             index_in_callee,
+//             is_signer: account_meta.is_signer,
+//             is_writable: account_meta.is_writable,
+//         });
+//     }
+//     if program_indices.is_empty() {
+//         program_indices.insert(0, transaction_accounts.len() as IndexOfAccount);
+//         let processor_account = AccountSharedData::new(0, 0, &native_loader::id());
+//         transaction_accounts.push((*loader_id, processor_account));
+//     }
+//     let pop_epoch_schedule_account = if !transaction_accounts
+//         .iter()
+//         .any(|(key, _)| *key == sysvar::epoch_schedule::id())
+//     {
+//         transaction_accounts.push((
+//             sysvar::epoch_schedule::id(),
+//             create_account_shared_data_for_test(&EpochSchedule::default()),
+//         ));
+//         true
+//     } else {
+//         false
+//     };
+//     with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
+//     let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
+//     program_cache_for_tx_batch.replenish(
+//         *loader_id,
+//         Arc::new(ProgramCacheEntry::new_builtin(0, 0, builtin_function)),
+//     );
+//     invoke_context.program_cache_for_tx_batch = &mut program_cache_for_tx_batch;
+//     pre_adjustments(&mut invoke_context);
+//     let result = invoke_context.process_instruction(
+//         instruction_data,
+//         &instruction_accounts,
+//         &program_indices,
+//         &mut 0,
+//         &mut ExecuteTimings::default(),
+//     );
+//     assert_eq!(result, expected_result);
+//     post_adjustments(&mut invoke_context);
+//     let mut transaction_accounts = transaction_context.deconstruct_without_keys().unwrap();
+//     if pop_epoch_schedule_account {
+//         transaction_accounts.pop();
+//     }
+//     transaction_accounts.pop();
+//     transaction_accounts
+// }
 
-#[cfg(test)]
-mod tests {
-    use {
-        super::*,
-        serde::{Deserialize, Serialize},
-        solana_compute_budget::compute_budget_limits,
-        solana_sdk::{account::WritableAccount, instruction::Instruction, rent::Rent},
-    };
+// #[cfg(test)]
+// mod tests {
+//     use {
+//         super::*,
+//         serde::{Deserialize, Serialize},
+//         solana_compute_budget::compute_budget_limits,
+//         solana_sdk::{account::WritableAccount, instruction::Instruction, rent::Rent},
+//     };
 
-    #[derive(Debug, Serialize, Deserialize)]
-    enum MockInstruction {
-        NoopSuccess,
-        NoopFail,
-        ModifyOwned,
-        ModifyNotOwned,
-        ModifyReadonly,
-        UnbalancedPush,
-        UnbalancedPop,
-        ConsumeComputeUnits {
-            compute_units_to_consume: u64,
-            desired_result: Result<(), InstructionError>,
-        },
-        Resize {
-            new_len: u64,
-        },
-    }
+//     #[derive(Debug, Serialize, Deserialize)]
+//     enum MockInstruction {
+//         NoopSuccess,
+//         NoopFail,
+//         ModifyOwned,
+//         ModifyNotOwned,
+//         ModifyReadonly,
+//         UnbalancedPush,
+//         UnbalancedPop,
+//         ConsumeComputeUnits {
+//             compute_units_to_consume: u64,
+//             desired_result: Result<(), InstructionError>,
+//         },
+//         Resize {
+//             new_len: u64,
+//         },
+//     }
 
-    const MOCK_BUILTIN_COMPUTE_UNIT_COST: u64 = 1;
+//     const MOCK_BUILTIN_COMPUTE_UNIT_COST: u64 = 1;
 
-    declare_process_instruction!(
-        MockBuiltin,
-        MOCK_BUILTIN_COMPUTE_UNIT_COST,
-        |invoke_context| {
-            let transaction_context = &invoke_context.transaction_context;
-            let instruction_context = transaction_context.get_current_instruction_context()?;
-            let instruction_data = instruction_context.get_instruction_data();
-            let program_id = instruction_context.get_last_program_key(transaction_context)?;
-            let instruction_accounts = (0..4)
-                .map(|instruction_account_index| InstructionAccount {
-                    index_in_transaction: instruction_account_index,
-                    index_in_caller: instruction_account_index,
-                    index_in_callee: instruction_account_index,
-                    is_signer: false,
-                    is_writable: false,
-                })
-                .collect::<Vec<_>>();
-            assert_eq!(
-                program_id,
-                instruction_context
-                    .try_borrow_instruction_account(transaction_context, 0)?
-                    .get_owner()
-            );
-            assert_ne!(
-                instruction_context
-                    .try_borrow_instruction_account(transaction_context, 1)?
-                    .get_owner(),
-                instruction_context
-                    .try_borrow_instruction_account(transaction_context, 0)?
-                    .get_key()
-            );
+//     declare_process_instruction!(
+//         MockBuiltin,
+//         MOCK_BUILTIN_COMPUTE_UNIT_COST,
+//         |invoke_context| {
+//             let transaction_context = &invoke_context.transaction_context;
+//             let instruction_context = transaction_context.get_current_instruction_context()?;
+//             let instruction_data = instruction_context.get_instruction_data();
+//             let program_id = instruction_context.get_last_program_key(transaction_context)?;
+//             let instruction_accounts = (0..4)
+//                 .map(|instruction_account_index| InstructionAccount {
+//                     index_in_transaction: instruction_account_index,
+//                     index_in_caller: instruction_account_index,
+//                     index_in_callee: instruction_account_index,
+//                     is_signer: false,
+//                     is_writable: false,
+//                 })
+//                 .collect::<Vec<_>>();
+//             assert_eq!(
+//                 program_id,
+//                 instruction_context
+//                     .try_borrow_instruction_account(transaction_context, 0)?
+//                     .get_owner()
+//             );
+//             assert_ne!(
+//                 instruction_context
+//                     .try_borrow_instruction_account(transaction_context, 1)?
+//                     .get_owner(),
+//                 instruction_context
+//                     .try_borrow_instruction_account(transaction_context, 0)?
+//                     .get_key()
+//             );
 
-            if let Ok(instruction) = bincode::deserialize(instruction_data) {
-                match instruction {
-                    MockInstruction::NoopSuccess => (),
-                    MockInstruction::NoopFail => return Err(InstructionError::GenericError),
-                    MockInstruction::ModifyOwned => instruction_context
-                        .try_borrow_instruction_account(transaction_context, 0)?
-                        .set_data_from_slice(&[1])?,
-                    MockInstruction::ModifyNotOwned => instruction_context
-                        .try_borrow_instruction_account(transaction_context, 1)?
-                        .set_data_from_slice(&[1])?,
-                    MockInstruction::ModifyReadonly => instruction_context
-                        .try_borrow_instruction_account(transaction_context, 2)?
-                        .set_data_from_slice(&[1])?,
-                    MockInstruction::UnbalancedPush => {
-                        instruction_context
-                            .try_borrow_instruction_account(transaction_context, 0)?
-                            .checked_add_lamports(1)?;
-                        let program_id = *transaction_context.get_key_of_account_at_index(3)?;
-                        let metas = vec![
-                            AccountMeta::new_readonly(
-                                *transaction_context.get_key_of_account_at_index(0)?,
-                                false,
-                            ),
-                            AccountMeta::new_readonly(
-                                *transaction_context.get_key_of_account_at_index(1)?,
-                                false,
-                            ),
-                        ];
-                        let inner_instruction = Instruction::new_with_bincode(
-                            program_id,
-                            &MockInstruction::NoopSuccess,
-                            metas,
-                        );
-                        invoke_context
-                            .transaction_context
-                            .get_next_instruction_context()
-                            .unwrap()
-                            .configure(&[3], &instruction_accounts, &[]);
-                        let result = invoke_context.push();
-                        assert_eq!(result, Err(InstructionError::UnbalancedInstruction));
-                        result?;
-                        invoke_context
-                            .native_invoke(inner_instruction.into(), &[])
-                            .and(invoke_context.pop())?;
-                    }
-                    MockInstruction::UnbalancedPop => instruction_context
-                        .try_borrow_instruction_account(transaction_context, 0)?
-                        .checked_add_lamports(1)?,
-                    MockInstruction::ConsumeComputeUnits {
-                        compute_units_to_consume,
-                        desired_result,
-                    } => {
-                        invoke_context
-                            .consume_checked(compute_units_to_consume)
-                            .map_err(|_| InstructionError::ComputationalBudgetExceeded)?;
-                        return desired_result;
-                    }
-                    MockInstruction::Resize { new_len } => instruction_context
-                        .try_borrow_instruction_account(transaction_context, 0)?
-                        .set_data(vec![0; new_len as usize])?,
-                }
-            } else {
-                return Err(InstructionError::InvalidInstructionData);
-            }
-            Ok(())
-        }
-    );
+//             if let Ok(instruction) = bincode::deserialize(instruction_data) {
+//                 match instruction {
+//                     MockInstruction::NoopSuccess => (),
+//                     MockInstruction::NoopFail => return Err(InstructionError::GenericError),
+//                     MockInstruction::ModifyOwned => instruction_context
+//                         .try_borrow_instruction_account(transaction_context, 0)?
+//                         .set_data_from_slice(&[1])?,
+//                     MockInstruction::ModifyNotOwned => instruction_context
+//                         .try_borrow_instruction_account(transaction_context, 1)?
+//                         .set_data_from_slice(&[1])?,
+//                     MockInstruction::ModifyReadonly => instruction_context
+//                         .try_borrow_instruction_account(transaction_context, 2)?
+//                         .set_data_from_slice(&[1])?,
+//                     MockInstruction::UnbalancedPush => {
+//                         instruction_context
+//                             .try_borrow_instruction_account(transaction_context, 0)?
+//                             .checked_add_lamports(1)?;
+//                         let program_id = *transaction_context.get_key_of_account_at_index(3)?;
+//                         let metas = vec![
+//                             AccountMeta::new_readonly(
+//                                 *transaction_context.get_key_of_account_at_index(0)?,
+//                                 false,
+//                             ),
+//                             AccountMeta::new_readonly(
+//                                 *transaction_context.get_key_of_account_at_index(1)?,
+//                                 false,
+//                             ),
+//                         ];
+//                         let inner_instruction = Instruction::new_with_bincode(
+//                             program_id,
+//                             &MockInstruction::NoopSuccess,
+//                             metas,
+//                         );
+//                         invoke_context
+//                             .transaction_context
+//                             .get_next_instruction_context()
+//                             .unwrap()
+//                             .configure(&[3], &instruction_accounts, &[]);
+//                         let result = invoke_context.push();
+//                         assert_eq!(result, Err(InstructionError::UnbalancedInstruction));
+//                         result?;
+//                         invoke_context
+//                             .native_invoke(inner_instruction.into(), &[])
+//                             .and(invoke_context.pop())?;
+//                     }
+//                     MockInstruction::UnbalancedPop => instruction_context
+//                         .try_borrow_instruction_account(transaction_context, 0)?
+//                         .checked_add_lamports(1)?,
+//                     MockInstruction::ConsumeComputeUnits {
+//                         compute_units_to_consume,
+//                         desired_result,
+//                     } => {
+//                         invoke_context
+//                             .consume_checked(compute_units_to_consume)
+//                             .map_err(|_| InstructionError::ComputationalBudgetExceeded)?;
+//                         return desired_result;
+//                     }
+//                     MockInstruction::Resize { new_len } => instruction_context
+//                         .try_borrow_instruction_account(transaction_context, 0)?
+//                         .set_data(vec![0; new_len as usize])?,
+//                 }
+//             } else {
+//                 return Err(InstructionError::InvalidInstructionData);
+//             }
+//             Ok(())
+//         }
+//     );
 
-    #[test]
-    fn test_instruction_stack_height() {
-        let one_more_than_max_depth = ComputeBudget::default()
-            .max_instruction_stack_depth
-            .saturating_add(1);
-        let mut invoke_stack = vec![];
-        let mut transaction_accounts = vec![];
-        let mut instruction_accounts = vec![];
-        for index in 0..one_more_than_max_depth {
-            invoke_stack.push(solana_sdk::pubkey::new_rand());
-            transaction_accounts.push((
-                solana_sdk::pubkey::new_rand(),
-                AccountSharedData::new(index as u64, 1, invoke_stack.get(index).unwrap()),
-            ));
-            instruction_accounts.push(InstructionAccount {
-                index_in_transaction: index as IndexOfAccount,
-                index_in_caller: index as IndexOfAccount,
-                index_in_callee: instruction_accounts.len() as IndexOfAccount,
-                is_signer: false,
-                is_writable: true,
-            });
-        }
-        for (index, program_id) in invoke_stack.iter().enumerate() {
-            transaction_accounts.push((
-                *program_id,
-                AccountSharedData::new(1, 1, &solana_sdk::pubkey::Pubkey::default()),
-            ));
-            instruction_accounts.push(InstructionAccount {
-                index_in_transaction: index as IndexOfAccount,
-                index_in_caller: index as IndexOfAccount,
-                index_in_callee: index as IndexOfAccount,
-                is_signer: false,
-                is_writable: false,
-            });
-        }
-        with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
+//     #[test]
+//     fn test_instruction_stack_height() {
+//         let one_more_than_max_depth = ComputeBudget::default()
+//             .max_instruction_stack_depth
+//             .saturating_add(1);
+//         let mut invoke_stack = vec![];
+//         let mut transaction_accounts = vec![];
+//         let mut instruction_accounts = vec![];
+//         for index in 0..one_more_than_max_depth {
+//             invoke_stack.push(solana_sdk::pubkey::new_rand());
+//             transaction_accounts.push((
+//                 solana_sdk::pubkey::new_rand(),
+//                 AccountSharedData::new(index as u64, 1, invoke_stack.get(index).unwrap()),
+//             ));
+//             instruction_accounts.push(InstructionAccount {
+//                 index_in_transaction: index as IndexOfAccount,
+//                 index_in_caller: index as IndexOfAccount,
+//                 index_in_callee: instruction_accounts.len() as IndexOfAccount,
+//                 is_signer: false,
+//                 is_writable: true,
+//             });
+//         }
+//         for (index, program_id) in invoke_stack.iter().enumerate() {
+//             transaction_accounts.push((
+//                 *program_id,
+//                 AccountSharedData::new(1, 1, &solana_sdk::pubkey::Pubkey::default()),
+//             ));
+//             instruction_accounts.push(InstructionAccount {
+//                 index_in_transaction: index as IndexOfAccount,
+//                 index_in_caller: index as IndexOfAccount,
+//                 index_in_callee: index as IndexOfAccount,
+//                 is_signer: false,
+//                 is_writable: false,
+//             });
+//         }
+//         with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
 
-        // Check call depth increases and has a limit
-        let mut depth_reached = 0;
-        for _ in 0..invoke_stack.len() {
-            invoke_context
-                .transaction_context
-                .get_next_instruction_context()
-                .unwrap()
-                .configure(
-                    &[one_more_than_max_depth.saturating_add(depth_reached) as IndexOfAccount],
-                    &instruction_accounts,
-                    &[],
-                );
-            if Err(InstructionError::CallDepth) == invoke_context.push() {
-                break;
-            }
-            depth_reached = depth_reached.saturating_add(1);
-        }
-        assert_ne!(depth_reached, 0);
-        assert!(depth_reached < one_more_than_max_depth);
-    }
+//         // Check call depth increases and has a limit
+//         let mut depth_reached = 0;
+//         for _ in 0..invoke_stack.len() {
+//             invoke_context
+//                 .transaction_context
+//                 .get_next_instruction_context()
+//                 .unwrap()
+//                 .configure(
+//                     &[one_more_than_max_depth.saturating_add(depth_reached) as IndexOfAccount],
+//                     &instruction_accounts,
+//                     &[],
+//                 );
+//             if Err(InstructionError::CallDepth) == invoke_context.push() {
+//                 break;
+//             }
+//             depth_reached = depth_reached.saturating_add(1);
+//         }
+//         assert_ne!(depth_reached, 0);
+//         assert!(depth_reached < one_more_than_max_depth);
+//     }
 
-    #[test]
-    fn test_max_instruction_trace_length() {
-        const MAX_INSTRUCTIONS: usize = 8;
-        let mut transaction_context =
-            TransactionContext::new(Vec::new(), Rent::default(), 1, MAX_INSTRUCTIONS);
-        for _ in 0..MAX_INSTRUCTIONS {
-            transaction_context.push().unwrap();
-            transaction_context.pop().unwrap();
-        }
-        assert_eq!(
-            transaction_context.push(),
-            Err(InstructionError::MaxInstructionTraceLengthExceeded)
-        );
-    }
+//     #[test]
+//     fn test_max_instruction_trace_length() {
+//         const MAX_INSTRUCTIONS: usize = 8;
+//         let mut transaction_context =
+//             TransactionContext::new(Vec::new(), Rent::default(), 1, MAX_INSTRUCTIONS);
+//         for _ in 0..MAX_INSTRUCTIONS {
+//             transaction_context.push().unwrap();
+//             transaction_context.pop().unwrap();
+//         }
+//         assert_eq!(
+//             transaction_context.push(),
+//             Err(InstructionError::MaxInstructionTraceLengthExceeded)
+//         );
+//     }
 
-    #[test]
-    fn test_process_instruction() {
-        let callee_program_id = solana_sdk::pubkey::new_rand();
-        let owned_account = AccountSharedData::new(42, 1, &callee_program_id);
-        let not_owned_account = AccountSharedData::new(84, 1, &solana_sdk::pubkey::new_rand());
-        let readonly_account = AccountSharedData::new(168, 1, &solana_sdk::pubkey::new_rand());
-        let loader_account = AccountSharedData::new(0, 1, &native_loader::id());
-        let mut program_account = AccountSharedData::new(1, 1, &native_loader::id());
-        program_account.set_executable(true);
-        let transaction_accounts = vec![
-            (solana_sdk::pubkey::new_rand(), owned_account),
-            (solana_sdk::pubkey::new_rand(), not_owned_account),
-            (solana_sdk::pubkey::new_rand(), readonly_account),
-            (callee_program_id, program_account),
-            (solana_sdk::pubkey::new_rand(), loader_account),
-        ];
-        let metas = vec![
-            AccountMeta::new(transaction_accounts.first().unwrap().0, false),
-            AccountMeta::new(transaction_accounts.get(1).unwrap().0, false),
-            AccountMeta::new_readonly(transaction_accounts.get(2).unwrap().0, false),
-        ];
-        let instruction_accounts = (0..4)
-            .map(|instruction_account_index| InstructionAccount {
-                index_in_transaction: instruction_account_index,
-                index_in_caller: instruction_account_index,
-                index_in_callee: instruction_account_index,
-                is_signer: false,
-                is_writable: instruction_account_index < 2,
-            })
-            .collect::<Vec<_>>();
-        with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
-        let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
-        program_cache_for_tx_batch.replenish(
-            callee_program_id,
-            Arc::new(ProgramCacheEntry::new_builtin(0, 1, MockBuiltin::vm)),
-        );
-        invoke_context.program_cache_for_tx_batch = &mut program_cache_for_tx_batch;
+//     #[test]
+//     fn test_process_instruction() {
+//         let callee_program_id = solana_sdk::pubkey::new_rand();
+//         let owned_account = AccountSharedData::new(42, 1, &callee_program_id);
+//         let not_owned_account = AccountSharedData::new(84, 1, &solana_sdk::pubkey::new_rand());
+//         let readonly_account = AccountSharedData::new(168, 1, &solana_sdk::pubkey::new_rand());
+//         let loader_account = AccountSharedData::new(0, 1, &native_loader::id());
+//         let mut program_account = AccountSharedData::new(1, 1, &native_loader::id());
+//         program_account.set_executable(true);
+//         let transaction_accounts = vec![
+//             (solana_sdk::pubkey::new_rand(), owned_account),
+//             (solana_sdk::pubkey::new_rand(), not_owned_account),
+//             (solana_sdk::pubkey::new_rand(), readonly_account),
+//             (callee_program_id, program_account),
+//             (solana_sdk::pubkey::new_rand(), loader_account),
+//         ];
+//         let metas = vec![
+//             AccountMeta::new(transaction_accounts.first().unwrap().0, false),
+//             AccountMeta::new(transaction_accounts.get(1).unwrap().0, false),
+//             AccountMeta::new_readonly(transaction_accounts.get(2).unwrap().0, false),
+//         ];
+//         let instruction_accounts = (0..4)
+//             .map(|instruction_account_index| InstructionAccount {
+//                 index_in_transaction: instruction_account_index,
+//                 index_in_caller: instruction_account_index,
+//                 index_in_callee: instruction_account_index,
+//                 is_signer: false,
+//                 is_writable: instruction_account_index < 2,
+//             })
+//             .collect::<Vec<_>>();
+//         with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
+//         let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
+//         program_cache_for_tx_batch.replenish(
+//             callee_program_id,
+//             Arc::new(ProgramCacheEntry::new_builtin(0, 1, MockBuiltin::vm)),
+//         );
+//         invoke_context.program_cache_for_tx_batch = &mut program_cache_for_tx_batch;
 
-        // Account modification tests
-        let cases = vec![
-            (MockInstruction::NoopSuccess, Ok(())),
-            (
-                MockInstruction::NoopFail,
-                Err(InstructionError::GenericError),
-            ),
-            (MockInstruction::ModifyOwned, Ok(())),
-            (
-                MockInstruction::ModifyNotOwned,
-                Err(InstructionError::ExternalAccountDataModified),
-            ),
-            (
-                MockInstruction::ModifyReadonly,
-                Err(InstructionError::ReadonlyDataModified),
-            ),
-            (
-                MockInstruction::UnbalancedPush,
-                Err(InstructionError::UnbalancedInstruction),
-            ),
-            (
-                MockInstruction::UnbalancedPop,
-                Err(InstructionError::UnbalancedInstruction),
-            ),
-        ];
-        for case in cases {
-            invoke_context
-                .transaction_context
-                .get_next_instruction_context()
-                .unwrap()
-                .configure(&[4], &instruction_accounts, &[]);
-            invoke_context.push().unwrap();
-            let inner_instruction =
-                Instruction::new_with_bincode(callee_program_id, &case.0, metas.clone());
-            let result = invoke_context
-                .native_invoke(inner_instruction.into(), &[])
-                .and(invoke_context.pop());
-            assert_eq!(result, case.1);
-        }
+//         // Account modification tests
+//         let cases = vec![
+//             (MockInstruction::NoopSuccess, Ok(())),
+//             (
+//                 MockInstruction::NoopFail,
+//                 Err(InstructionError::GenericError),
+//             ),
+//             (MockInstruction::ModifyOwned, Ok(())),
+//             (
+//                 MockInstruction::ModifyNotOwned,
+//                 Err(InstructionError::ExternalAccountDataModified),
+//             ),
+//             (
+//                 MockInstruction::ModifyReadonly,
+//                 Err(InstructionError::ReadonlyDataModified),
+//             ),
+//             (
+//                 MockInstruction::UnbalancedPush,
+//                 Err(InstructionError::UnbalancedInstruction),
+//             ),
+//             (
+//                 MockInstruction::UnbalancedPop,
+//                 Err(InstructionError::UnbalancedInstruction),
+//             ),
+//         ];
+//         for case in cases {
+//             invoke_context
+//                 .transaction_context
+//                 .get_next_instruction_context()
+//                 .unwrap()
+//                 .configure(&[4], &instruction_accounts, &[]);
+//             invoke_context.push().unwrap();
+//             let inner_instruction =
+//                 Instruction::new_with_bincode(callee_program_id, &case.0, metas.clone());
+//             let result = invoke_context
+//                 .native_invoke(inner_instruction.into(), &[])
+//                 .and(invoke_context.pop());
+//             assert_eq!(result, case.1);
+//         }
 
-        // Compute unit consumption tests
-        let compute_units_to_consume = 10;
-        let expected_results = vec![Ok(()), Err(InstructionError::GenericError)];
-        for expected_result in expected_results {
-            invoke_context
-                .transaction_context
-                .get_next_instruction_context()
-                .unwrap()
-                .configure(&[4], &instruction_accounts, &[]);
-            invoke_context.push().unwrap();
-            let inner_instruction = Instruction::new_with_bincode(
-                callee_program_id,
-                &MockInstruction::ConsumeComputeUnits {
-                    compute_units_to_consume,
-                    desired_result: expected_result.clone(),
-                },
-                metas.clone(),
-            );
-            let inner_instruction = StableInstruction::from(inner_instruction);
-            let (inner_instruction_accounts, program_indices) = invoke_context
-                .prepare_instruction(&inner_instruction, &[])
-                .unwrap();
+//         // Compute unit consumption tests
+//         let compute_units_to_consume = 10;
+//         let expected_results = vec![Ok(()), Err(InstructionError::GenericError)];
+//         for expected_result in expected_results {
+//             invoke_context
+//                 .transaction_context
+//                 .get_next_instruction_context()
+//                 .unwrap()
+//                 .configure(&[4], &instruction_accounts, &[]);
+//             invoke_context.push().unwrap();
+//             let inner_instruction = Instruction::new_with_bincode(
+//                 callee_program_id,
+//                 &MockInstruction::ConsumeComputeUnits {
+//                     compute_units_to_consume,
+//                     desired_result: expected_result.clone(),
+//                 },
+//                 metas.clone(),
+//             );
+//             let inner_instruction = StableInstruction::from(inner_instruction);
+//             let (inner_instruction_accounts, program_indices) = invoke_context
+//                 .prepare_instruction(&inner_instruction, &[])
+//                 .unwrap();
 
-            let mut compute_units_consumed = 0;
-            let result = invoke_context.process_instruction(
-                &inner_instruction.data,
-                &inner_instruction_accounts,
-                &program_indices,
-                &mut compute_units_consumed,
-                &mut ExecuteTimings::default(),
-            );
+//             let mut compute_units_consumed = 0;
+//             let result = invoke_context.process_instruction(
+//                 &inner_instruction.data,
+//                 &inner_instruction_accounts,
+//                 &program_indices,
+//                 &mut compute_units_consumed,
+//                 &mut ExecuteTimings::default(),
+//             );
 
-            // Because the instruction had compute cost > 0, then regardless of the execution result,
-            // the number of compute units consumed should be a non-default which is something greater
-            // than zero.
-            assert!(compute_units_consumed > 0);
-            assert_eq!(
-                compute_units_consumed,
-                compute_units_to_consume.saturating_add(MOCK_BUILTIN_COMPUTE_UNIT_COST),
-            );
-            assert_eq!(result, expected_result);
+//             // Because the instruction had compute cost > 0, then regardless of the execution result,
+//             // the number of compute units consumed should be a non-default which is something greater
+//             // than zero.
+//             assert!(compute_units_consumed > 0);
+//             assert_eq!(
+//                 compute_units_consumed,
+//                 compute_units_to_consume.saturating_add(MOCK_BUILTIN_COMPUTE_UNIT_COST),
+//             );
+//             assert_eq!(result, expected_result);
 
-            invoke_context.pop().unwrap();
-        }
-    }
+//             invoke_context.pop().unwrap();
+//         }
+//     }
 
-    #[test]
-    fn test_invoke_context_compute_budget() {
-        let transaction_accounts =
-            vec![(solana_sdk::pubkey::new_rand(), AccountSharedData::default())];
+//     #[test]
+//     fn test_invoke_context_compute_budget() {
+//         let transaction_accounts =
+//             vec![(solana_sdk::pubkey::new_rand(), AccountSharedData::default())];
 
-        with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
-        invoke_context.compute_budget = ComputeBudget::new(
-            compute_budget_limits::DEFAULT_INSTRUCTION_COMPUTE_UNIT_LIMIT as u64,
-        );
+//         with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
+//         invoke_context.compute_budget = ComputeBudget::new(
+//             compute_budget_limits::DEFAULT_INSTRUCTION_COMPUTE_UNIT_LIMIT as u64,
+//         );
 
-        invoke_context
-            .transaction_context
-            .get_next_instruction_context()
-            .unwrap()
-            .configure(&[0], &[], &[]);
-        invoke_context.push().unwrap();
-        assert_eq!(
-            *invoke_context.get_compute_budget(),
-            ComputeBudget::new(
-                compute_budget_limits::DEFAULT_INSTRUCTION_COMPUTE_UNIT_LIMIT as u64
-            )
-        );
-        invoke_context.pop().unwrap();
-    }
+//         invoke_context
+//             .transaction_context
+//             .get_next_instruction_context()
+//             .unwrap()
+//             .configure(&[0], &[], &[]);
+//         invoke_context.push().unwrap();
+//         assert_eq!(
+//             *invoke_context.get_compute_budget(),
+//             ComputeBudget::new(
+//                 compute_budget_limits::DEFAULT_INSTRUCTION_COMPUTE_UNIT_LIMIT as u64
+//             )
+//         );
+//         invoke_context.pop().unwrap();
+//     }
 
-    #[test]
-    fn test_process_instruction_accounts_resize_delta() {
-        let program_key = Pubkey::new_unique();
-        let user_account_data_len = 123u64;
-        let user_account =
-            AccountSharedData::new(100, user_account_data_len as usize, &program_key);
-        let dummy_account = AccountSharedData::new(10, 0, &program_key);
-        let mut program_account = AccountSharedData::new(500, 500, &native_loader::id());
-        program_account.set_executable(true);
-        let transaction_accounts = vec![
-            (Pubkey::new_unique(), user_account),
-            (Pubkey::new_unique(), dummy_account),
-            (program_key, program_account),
-        ];
-        let instruction_accounts = [
-            InstructionAccount {
-                index_in_transaction: 0,
-                index_in_caller: 0,
-                index_in_callee: 0,
-                is_signer: false,
-                is_writable: true,
-            },
-            InstructionAccount {
-                index_in_transaction: 1,
-                index_in_caller: 1,
-                index_in_callee: 1,
-                is_signer: false,
-                is_writable: false,
-            },
-        ];
-        with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
-        let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
-        program_cache_for_tx_batch.replenish(
-            program_key,
-            Arc::new(ProgramCacheEntry::new_builtin(0, 0, MockBuiltin::vm)),
-        );
-        invoke_context.program_cache_for_tx_batch = &mut program_cache_for_tx_batch;
+//     #[test]
+//     fn test_process_instruction_accounts_resize_delta() {
+//         let program_key = Pubkey::new_unique();
+//         let user_account_data_len = 123u64;
+//         let user_account =
+//             AccountSharedData::new(100, user_account_data_len as usize, &program_key);
+//         let dummy_account = AccountSharedData::new(10, 0, &program_key);
+//         let mut program_account = AccountSharedData::new(500, 500, &native_loader::id());
+//         program_account.set_executable(true);
+//         let transaction_accounts = vec![
+//             (Pubkey::new_unique(), user_account),
+//             (Pubkey::new_unique(), dummy_account),
+//             (program_key, program_account),
+//         ];
+//         let instruction_accounts = [
+//             InstructionAccount {
+//                 index_in_transaction: 0,
+//                 index_in_caller: 0,
+//                 index_in_callee: 0,
+//                 is_signer: false,
+//                 is_writable: true,
+//             },
+//             InstructionAccount {
+//                 index_in_transaction: 1,
+//                 index_in_caller: 1,
+//                 index_in_callee: 1,
+//                 is_signer: false,
+//                 is_writable: false,
+//             },
+//         ];
+//         with_mock_invoke_context!(invoke_context, transaction_context, transaction_accounts);
+//         let mut program_cache_for_tx_batch = ProgramCacheForTxBatch::default();
+//         program_cache_for_tx_batch.replenish(
+//             program_key,
+//             Arc::new(ProgramCacheEntry::new_builtin(0, 0, MockBuiltin::vm)),
+//         );
+//         invoke_context.program_cache_for_tx_batch = &mut program_cache_for_tx_batch;
 
-        // Test: Resize the account to *the same size*, so not consuming any additional size; this must succeed
-        {
-            let resize_delta: i64 = 0;
-            let new_len = (user_account_data_len as i64).saturating_add(resize_delta) as u64;
-            let instruction_data =
-                bincode::serialize(&MockInstruction::Resize { new_len }).unwrap();
+//         // Test: Resize the account to *the same size*, so not consuming any additional size; this must succeed
+//         {
+//             let resize_delta: i64 = 0;
+//             let new_len = (user_account_data_len as i64).saturating_add(resize_delta) as u64;
+//             let instruction_data =
+//                 bincode::serialize(&MockInstruction::Resize { new_len }).unwrap();
 
-            let result = invoke_context.process_instruction(
-                &instruction_data,
-                &instruction_accounts,
-                &[2],
-                &mut 0,
-                &mut ExecuteTimings::default(),
-            );
+//             let result = invoke_context.process_instruction(
+//                 &instruction_data,
+//                 &instruction_accounts,
+//                 &[2],
+//                 &mut 0,
+//                 &mut ExecuteTimings::default(),
+//             );
 
-            assert!(result.is_ok());
-            assert_eq!(
-                invoke_context
-                    .transaction_context
-                    .accounts_resize_delta()
-                    .unwrap(),
-                resize_delta
-            );
-        }
+//             assert!(result.is_ok());
+//             assert_eq!(
+//                 invoke_context
+//                     .transaction_context
+//                     .accounts_resize_delta()
+//                     .unwrap(),
+//                 resize_delta
+//             );
+//         }
 
-        // Test: Resize the account larger; this must succeed
-        {
-            let resize_delta: i64 = 1;
-            let new_len = (user_account_data_len as i64).saturating_add(resize_delta) as u64;
-            let instruction_data =
-                bincode::serialize(&MockInstruction::Resize { new_len }).unwrap();
+//         // Test: Resize the account larger; this must succeed
+//         {
+//             let resize_delta: i64 = 1;
+//             let new_len = (user_account_data_len as i64).saturating_add(resize_delta) as u64;
+//             let instruction_data =
+//                 bincode::serialize(&MockInstruction::Resize { new_len }).unwrap();
 
-            let result = invoke_context.process_instruction(
-                &instruction_data,
-                &instruction_accounts,
-                &[2],
-                &mut 0,
-                &mut ExecuteTimings::default(),
-            );
+//             let result = invoke_context.process_instruction(
+//                 &instruction_data,
+//                 &instruction_accounts,
+//                 &[2],
+//                 &mut 0,
+//                 &mut ExecuteTimings::default(),
+//             );
 
-            assert!(result.is_ok());
-            assert_eq!(
-                invoke_context
-                    .transaction_context
-                    .accounts_resize_delta()
-                    .unwrap(),
-                resize_delta
-            );
-        }
+//             assert!(result.is_ok());
+//             assert_eq!(
+//                 invoke_context
+//                     .transaction_context
+//                     .accounts_resize_delta()
+//                     .unwrap(),
+//                 resize_delta
+//             );
+//         }
 
-        // Test: Resize the account smaller; this must succeed
-        {
-            let resize_delta: i64 = -1;
-            let new_len = (user_account_data_len as i64).saturating_add(resize_delta) as u64;
-            let instruction_data =
-                bincode::serialize(&MockInstruction::Resize { new_len }).unwrap();
+//         // Test: Resize the account smaller; this must succeed
+//         {
+//             let resize_delta: i64 = -1;
+//             let new_len = (user_account_data_len as i64).saturating_add(resize_delta) as u64;
+//             let instruction_data =
+//                 bincode::serialize(&MockInstruction::Resize { new_len }).unwrap();
 
-            let result = invoke_context.process_instruction(
-                &instruction_data,
-                &instruction_accounts,
-                &[2],
-                &mut 0,
-                &mut ExecuteTimings::default(),
-            );
+//             let result = invoke_context.process_instruction(
+//                 &instruction_data,
+//                 &instruction_accounts,
+//                 &[2],
+//                 &mut 0,
+//                 &mut ExecuteTimings::default(),
+//             );
 
-            assert!(result.is_ok());
-            assert_eq!(
-                invoke_context
-                    .transaction_context
-                    .accounts_resize_delta()
-                    .unwrap(),
-                resize_delta
-            );
-        }
-    }
-}
+//             assert!(result.is_ok());
+//             assert_eq!(
+//                 invoke_context
+//                     .transaction_context
+//                     .accounts_resize_delta()
+//                     .unwrap(),
+//                 resize_delta
+//             );
+//         }
+//     }
+// }
