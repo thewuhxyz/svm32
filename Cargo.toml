@@ -127,8 +127,8 @@ solana-program-memory = { version = "=2.1.13" }
 solana-program-runtime = {path = "crates/program-runtime"}
 solana-precompiles = { version = "=0.0.2" }
 solana-pubkey = "=2.1.13"
-# solana_rbpf = "=0.8.5"
-solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
+solana_rbpf = "=0.8.5"
+# solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
 solana-rent = "=2.1.13"
 solana-reserved-account-keys = "0.0.2"
 solana-rpc-client = "=2.1.13"
@@ -188,7 +188,7 @@ sp1-build = "4.1.1"
 
 [patch.crates-io]
 getrandom = { git = "https://github.com/thewuhxyz/getrandom", branch = "0.1-zkvm"}
-solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
+# solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
 solana-bpf-loader-program = { path = "crates/bpf_loader"}
 solana-compute-budget-program = {path = "crates/compute-budget"}
 solana-frozen-abi = { path = "crates/frozen-abi" }

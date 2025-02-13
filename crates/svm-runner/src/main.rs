@@ -125,5 +125,5 @@ pub fn main() {
         &config,
     );
 
-    println!("Batch Result{:#?}", result.processing_results.last());
+    println!("Batch Result{:#?}", result.processing_results);
 }

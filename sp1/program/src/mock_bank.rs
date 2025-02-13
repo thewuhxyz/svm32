@@ -352,14 +352,29 @@ fn create_custom_environment<'a>() -> BuiltinProgram<InvokeContext<'a>> {
         reject_broken_elfs: true,
         noop_instruction_rate: 256,
         sanitize_user_provided_values: true,
-        // external_internal_function_hash_collision: false,
-        // reject_callx_r10: true,
-        // enable_sbpf_v1: true,
-        // enable_sbpf_v2: false,
-        enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V1,
+        external_internal_function_hash_collision: false,
+        reject_callx_r10: true,
+        enable_sbpf_v1: true,
+        enable_sbpf_v2: false,
         optimize_rodata: false,
         aligned_memory_mapping: true,
     };
+    // let vm_config = Config {
+    //     max_call_depth: compute_budget.max_call_depth,
+    //     stack_frame_size: compute_budget.stack_frame_size,
+    //     enable_address_translation: true,
+    //     enable_stack_frame_gaps: true,
+    //     instruction_meter_checkpoint_distance: 10000,
+    //     enable_instruction_meter: true,
+    //     enable_instruction_tracing: true,
+    //     enable_symbol_and_section_labels: true,
+    //     reject_broken_elfs: true,
+    //     noop_instruction_rate: 256,
+    //     sanitize_user_provided_values: true,
+    //     enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V1,
+    //     optimize_rodata: false,
+    //     aligned_memory_mapping: true,
+    // };
 
     // These functions are system calls the compile contract calls during execution, so they
     // need to be registered.

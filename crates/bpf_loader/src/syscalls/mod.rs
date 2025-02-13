@@ -251,7 +251,8 @@ pub fn morph_into_deployment_environment_v1(
 
     let mut result = FunctionRegistry::<BuiltinFunction<InvokeContext>>::default();
 
-    for (key, (name, value)) in from.get_function_registry(SBPFVersion::V1).iter() {
+    // for (key, (name, value)) in from.get_function_registry(SBPFVersion::V1).iter() {
+    for (key, (name, value)) in from.get_function_registry().iter() {
         // Deployment of programs with sol_alloc_free is disabled. So do not register the syscall.
         if name != *b"sol_alloc_free_" {
             result.register_function(key, name, value)?;
@@ -299,17 +300,32 @@ pub fn create_program_runtime_environment_v1<'a>(
         reject_broken_elfs: reject_deployment_of_broken_elfs,
         noop_instruction_rate: 256,
         sanitize_user_provided_values: true,
-        // external_internal_function_hash_collision: true,
-        // reject_callx_r10: true,
-        // enable_sbpf_v1: !feature_set.is_active(&disable_sbpf_v1_execution::id())
-        //     || feature_set.is_active(&reenable_sbpf_v1_execution::id()),
-        // enable_sbpf_v2: false,
+        external_internal_function_hash_collision: true,
+        reject_callx_r10: true,
+        enable_sbpf_v1: !feature_set.is_active(&disable_sbpf_v1_execution::id())
+            || feature_set.is_active(&reenable_sbpf_v1_execution::id()),
+        enable_sbpf_v2: false,
         optimize_rodata: false,
-        enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V2,
-        // paged_memory_mapping: false,
         aligned_memory_mapping: !feature_set.is_active(&bpf_account_data_direct_mapping::id()),
         // Warning, do not use `Config::default()` so that configuration here is explicit.
     };
+    // let config = Config {
+    //     max_call_depth: compute_budget.max_call_depth,
+    //     stack_frame_size: compute_budget.stack_frame_size,
+    //     enable_address_translation: true,
+    //     enable_stack_frame_gaps: !feature_set.is_active(&bpf_account_data_direct_mapping::id()),
+    //     instruction_meter_checkpoint_distance: 10000,
+    //     enable_instruction_meter: true,
+    //     enable_instruction_tracing: debugging_features,
+    //     enable_symbol_and_section_labels: debugging_features,
+    //     reject_broken_elfs: reject_deployment_of_broken_elfs,
+    //     noop_instruction_rate: 256,
+    //     sanitize_user_provided_values: true,
+    //     optimize_rodata: false,
+    //     enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V2,
+    //     aligned_memory_mapping: !feature_set.is_active(&bpf_account_data_direct_mapping::id()),
+    //     // Warning, do not use `Config::default()` so that configuration here is explicit.
+    // };
     let mut result = FunctionRegistry::<BuiltinFunction<InvokeContext>>::default();
 
     // Abort
@@ -508,16 +524,36 @@ pub fn create_program_runtime_environment_v2<'a>(
         reject_broken_elfs: true,
         noop_instruction_rate: 256,
         sanitize_user_provided_values: true,
-        // external_internal_function_hash_collision: true,
-        // reject_callx_r10: true,
-        // enable_sbpf_v1: false,
-        // enable_sbpf_v2: true,
-        enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V2,
-        // paged_memory_mapping: false,
+        external_internal_function_hash_collision: true,
+        reject_callx_r10: true,
+        enable_sbpf_v1: false,
+        enable_sbpf_v2: true,
         optimize_rodata: true,
         aligned_memory_mapping: true,
         // Warning, do not use `Config::default()` so that configuration here is explicit.
     };
+    // let config = Config {
+    //     max_call_depth: compute_budget.max_call_depth,
+    //     stack_frame_size: compute_budget.stack_frame_size,
+    //     enable_address_translation: true, // To be deactivated once we have BTF inference and verification
+    //     enable_stack_frame_gaps: false,
+    //     instruction_meter_checkpoint_distance: 10000,
+    //     enable_instruction_meter: true,
+    //     enable_instruction_tracing: debugging_features,
+    //     enable_symbol_and_section_labels: debugging_features,
+    //     reject_broken_elfs: true,
+    //     noop_instruction_rate: 256,
+    //     sanitize_user_provided_values: true,
+    //     // external_internal_function_hash_collision: true,
+    //     // reject_callx_r10: true,
+    //     // enable_sbpf_v1: false,
+    //     // enable_sbpf_v2: true,
+    //     enabled_sbpf_versions: SBPFVersion::V1..=SBPFVersion::V2,
+    //     // paged_memory_mapping: false,
+    //     optimize_rodata: true,
+    //     aligned_memory_mapping: true,
+    //     // Warning, do not use `Config::default()` so that configuration here is explicit.
+    // };
     BuiltinProgram::new_loader(config, FunctionRegistry::default())
 }
 

@@ -60,6 +60,7 @@ pub fn main() {
     let mut txs = vec![];
     let mut txscheck = vec![];
 
+    // let program = programs()[0];
     for program in programs() {
         println!("Deploying Program: {:#?}", program);
         let solana_program = deploy_program(program.to_string(), DEPLOYMENT_SLOT, &mock_bank);
