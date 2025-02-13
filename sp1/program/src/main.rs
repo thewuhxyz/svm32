@@ -116,6 +116,8 @@ pub fn main() {
         },
         ..TransactionProcessingConfig::default()
     };
+
+    println!("here");
     
     let result = batch_processor.load_and_execute_sanitized_transactions(
         &mock_bank,

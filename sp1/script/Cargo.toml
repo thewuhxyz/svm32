@@ -8,3 +8,6 @@ sp1-sdk = {workspace = true}
 
 [build-dependencies]
 sp1-build = {workspace = true}
+
+[target.'cfg(not(target_arch = "riscv32im-succinct-zkvm-elf"))'.dependencies]
+tracing-appender = "0.2.3" 

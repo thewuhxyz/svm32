@@ -5,6 +5,7 @@ members = [
     "crates/compute-budget",
     # "crates/paytube", 
     "crates/program-runtime",
+    "crates/measure",
     "crates/secp256r1-program",
     "crates/svm", 
     # "crates/svm-conformance", 
@@ -177,6 +178,7 @@ getrandom = { git = "https://github.com/thewuhxyz/getrandom", branch = "0.1-zkvm
 solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
 solana-bpf-loader-program = { path = "crates/bpf_loader"}
 solana-compute-budget-program = {path = "crates/compute-budget"}
+solana-measure = { path = "crates/measure" }
 solana-program-runtime = {path = "crates/program-runtime"}
 solana-secp256r1-program = {path = "crates/secp256r1-program"}
 solana-svm = { path = "crates/svm" }

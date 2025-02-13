@@ -1007,9 +1007,9 @@ dependencies = [
 
 [[package]]
 name = "blst"
-version = "0.3.13"
+version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4378725facc195f1a538864863f6de233b500a8862747e7f165078a419d5e874"
+checksum = "47c79a94619fade3c0b887670333513a67ac28a6a7e653eb260bf0d4103db38d"
 dependencies = [
  "cc",
  "glob",
@@ -1280,6 +1280,7 @@ dependencies = [
  "solana-bpf-loader-program",
  "solana-compute-budget",
  "solana-feature-set",
+ "solana-measure",
  "solana-program-runtime",
  "solana-sdk",
  "solana-svm",
@@ -1287,6 +1288,7 @@ dependencies = [
  "solana-type-overrides",
  "solana_rbpf",
  "sp1-zkvm",
+ "tracing-appender",
 ]
 
 [[package]]
@@ -1295,6 +1297,7 @@ version = "0.1.0"
 dependencies = [
  "sp1-build",
  "sp1-sdk",
+ "tracing-appender",
 ]
 
 [[package]]
@@ -5631,8 +5634,6 @@ dependencies = [
 [[package]]
 name = "solana-measure"
 version = "2.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04cd58f210630986a5c3f0344da347bb75fc2a90f2fe287438a81cd2c6ffcc8b"
 
 [[package]]
 name = "solana-msg"

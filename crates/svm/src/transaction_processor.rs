@@ -25,8 +25,7 @@ use {
     },
     solana_compute_budget::compute_budget::ComputeBudget,
     solana_feature_set::{
-        enable_transaction_loading_failure_fees,
-        remove_rounding_in_fee_calculation, FeatureSet,
+        enable_transaction_loading_failure_fees, remove_rounding_in_fee_calculation, FeatureSet,
     },
     solana_log_collector::LogCollector,
     solana_measure::{measure::Measure, measure_us},
@@ -254,17 +253,24 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
         // transactions could be truncated as a result of `.iter().zip()` in
         // many of the below methods.
         // See <https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.zip>.
+
+        println!("1");
+
         debug_assert_eq!(
             sanitized_txs.len(),
             check_results.len(),
             "Length of check_results does not match length of sanitized_txs"
         );
 
+        println!("2");
         // Initialize metrics.
         let mut error_metrics = TransactionErrorMetrics::default();
         let mut execute_timings = ExecuteTimings::default();
+        
+        println!("3");
+        println!("3");
 
-        let (validation_results, validate_fees_us) = measure_us!(self.validate_fees(
+        let validation_results  = self.validate_fees(
             callbacks,
             config.account_overrides,
             sanitized_txs,
@@ -277,8 +283,10 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
                 .rent_collector
                 .unwrap_or(&RentCollector::default()),
             &mut error_metrics
-        ));
-
+        );
+        let validate_fees_us = 0;
+        
+        println!("4");
         let (mut program_accounts_map, filter_executable_us) =
             measure_us!(Self::filter_executable_program_accounts(
                 callbacks,
@@ -287,6 +295,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
                 PROGRAM_OWNERS
             ));
 
+        println!("5");
         let (mut program_cache_for_tx_batch, program_cache_us) = measure_us!({
             for builtin_program in self.builtin_program_ids.read().unwrap().iter() {
                 program_accounts_map.insert(*builtin_program, 0);
@@ -312,6 +321,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
             program_cache_for_tx_batch
         });
 
+        println!("6");
         let (loaded_transactions, load_accounts_us) = measure_us!(load_accounts(
             callbacks,
             sanitized_txs,
@@ -324,6 +334,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
                 .unwrap_or(&RentCollector::default()),
             &program_cache_for_tx_batch,
         ));
+        println!("7");
 
         let enable_transaction_loading_failure_fees = environment
             .feature_set
@@ -363,6 +374,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
                 })
                 .collect());
 
+        println!("8");
         // Skip eviction when there's no chance this particular tx batch has increased the size of
         // ProgramCache entries. Note that loaded_missing is deliberately defined, so that there's
         // still at least one other batch, which will evict the program cache, even after the
@@ -378,6 +390,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
                 );
         }
 
+        println!("9");
         debug!(
             "load: {}us execute: {}us txs_len={}",
             load_accounts_us,
@@ -385,6 +398,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
             sanitized_txs.len(),
         );
 
+        println!("10");
         execute_timings
             .saturating_add_in_place(ExecuteTimingType::ValidateFeesUs, validate_fees_us);
         execute_timings
@@ -393,6 +407,8 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
             .saturating_add_in_place(ExecuteTimingType::ProgramCacheUs, program_cache_us);
         execute_timings.saturating_add_in_place(ExecuteTimingType::LoadUs, load_accounts_us);
         execute_timings.saturating_add_in_place(ExecuteTimingType::ExecuteUs, execution_us);
+        
+        println!("11");
 
         LoadAndExecuteSanitizedTransactionsOutput {
             error_metrics,
@@ -412,6 +428,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
         rent_collector: &dyn SVMRentCollector,
         error_counters: &mut TransactionErrorMetrics,
     ) -> Vec<TransactionValidationResult> {
+        println!("4");
         sanitized_txs
             .iter()
             .zip(check_results)
@@ -449,7 +466,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
     ) -> transaction::Result<ValidatedTransactionDetails> {
         let compute_budget_limits = process_compute_budget_instructions(
             message.program_instructions_iter(),
-            &FeatureSet::default()
+            &FeatureSet::default(),
         )
         .inspect_err(|_err| {
             error_counters.invalid_compute_budget += 1;
