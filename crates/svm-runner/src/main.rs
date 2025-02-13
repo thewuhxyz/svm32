@@ -86,26 +86,26 @@ pub fn main() {
     //     EXECUTION_EPOCH,
     //     HashSet::new(),
     // );
-    
+
     let batch_processor = TransactionBatchProcessor::<MockForkGraph>::new_uninitialized(
         EXECUTION_SLOT,
         EXECUTION_EPOCH,
     );
-    
+
     let fork_graph = Arc::new(RwLock::new(MockForkGraph {}));
-    
+
     // let fork_graph = Arc::new(RwLock::new(MockForkGraph {}));
-    
+
     create_executable_environment(
         fork_graph.clone(),
         &mock_bank,
         &mut batch_processor.program_cache.write().unwrap(),
     );
-    
+
     // The sysvars must be put in the cache
     batch_processor.fill_missing_sysvar_cache_entries(&mock_bank);
     register_builtins(&mock_bank, &batch_processor);
-    
+
     let config = TransactionProcessingConfig {
         recording_config: ExecutionRecordingConfig {
             enable_cpi_recording: true,
@@ -116,7 +116,7 @@ pub fn main() {
     };
 
     println!("here");
-    
+
     let result = batch_processor.load_and_execute_sanitized_transactions(
         &mock_bank,
         &txs,
@@ -125,5 +125,5 @@ pub fn main() {
         &config,
     );
 
-    println!("Batch Result{:#?}", result.processing_results);
+    println!("Batch Result {:#?}", result.processing_results[0]);
 }

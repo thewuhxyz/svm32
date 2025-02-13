@@ -7,7 +7,7 @@ fn main() {
 
     let client = ProverClient::from_env();
     let (values, result) = client.execute(ELF, &stdin).run().unwrap();
-    
+
     println!("result: {}", result);
     println!("values: {:?}", values);
 
