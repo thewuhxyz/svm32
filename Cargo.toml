@@ -4,8 +4,10 @@ members = [
     "crates/bpf_loader/gen-syscall-list",
     "crates/compute-budget",
     # "crates/paytube", 
+    "crates/frozen-abi",
     "crates/program-runtime",
     "crates/measure",
+    "crates/sdk",
     "crates/secp256r1-program",
     "crates/svm", 
     # "crates/svm-conformance", 
@@ -26,7 +28,9 @@ edition = "2021"
 assert_matches = "1.5"
 base64 = "0.22.1"
 bincode = "1.3.3"
+bitflags = { version = "2.6.0" }
 bs58 = { version = "0.5.1", default-features = false }
+bv = "0.11.1"
 bytemuck = "1.21.0"
 byteorder = "1.5.0"
 clap = "2.33.1"
@@ -35,8 +39,10 @@ ed25519-dalek = "=1.0.1"
 ecdsa = { version = "0.16", features = [] }
 enum-iterator = "1.5.0"
 env_logger = "0.9.3"
+generic-array = { version = "0.14.7", default-features = false }
 # getrandom = { git = "https://github.com/sp1-patches/getrandom" }
 # getrandom = { version = "0.3.1" }
+im = "15.1.0"
 itertools = "0.12.1"
 jsonrpc-core = "18.0.0"
 jsonrpc-core-client = "18.0.0"
@@ -49,6 +55,7 @@ lazy_static = "1.5"
 libc = "0.2.169"
 libsecp256k1 = "=0.6"
 log = "0.4.22"
+memmap2 = "0.5.10"
 memoffset = "0.9"
 num-derive = "0.4"
 num-traits = "0.2"
@@ -64,8 +71,10 @@ regex = "1.11.1"
 # rand0-7 = { package = "rand", version = "0.7" }
 scopeguard = "1.2.0"
 serde = "1.0.217" 
+serde_bytes = "0.11.15"
 serde_derive = "1.0.217"
 serde_json = "1.0.138"
+serde_with = { version = "3.11.0", default-features = false }
 sha2 = "0.10"
 shuttle = "0.8.0"
 solana-account = { version = "=2.1.13" }
@@ -86,9 +95,12 @@ solana-feature-set = "=2.1.13"
 solana-fee = "=2.1.13"
 solana-fee-calculator = "=2.1.13"
 solana-fee-structure = "0.0.2"
-solana-frozen-abi = { version = "=2.1.13", features = [
+solana-frozen-abi = { path = "crates/frozen-abi", features = [
     "frozen-abi",
 ] }
+# solana-frozen-abi = { version = "=2.1.13", features = [
+#     "frozen-abi",
+# ] }
 solana-frozen-abi-macro = { version = "=2.1.13", features = [
     "frozen-abi",
 ] }
@@ -100,7 +112,8 @@ solana-last-restart-slot = { version = "=2.1.13" }
 solana-loader-v4-program = { version = "=2.1.13" }
 solana-log-collector = "=2.1.13"
 solana-logger = "=2.1.13"
-solana-measure = { version = "=2.1.13" }
+# solana-measure = { version = "=2.1.13" }
+solana-measure = { path = "crates/measure" }
 solana-message = { version = "=0.0.3" }
 # solana-metrics = { version = "=2.1.13" }
 solana-native-token = "=2.1.13"
@@ -122,8 +135,8 @@ solana-rpc-client = "=2.1.13"
 solana-rpc-client-api = "=2.1.13"
 solana-runtime-transaction = "=2.1.13"
 # solana-sbpf = "0.10.0"
-solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils"] }
-# solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils", "openssl-vendored"] }
+# solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils"] }
+solana-sdk = { path = "crates/sdk", features = ["dev-context-only-utils"] }# solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils", "openssl-vendored"] }
 solana-sdk-ids = { version = "=0.0.3" }
 solana-secp256k1-program = "1.8.16"
 solana-secp256r1-program = {path = "crates/secp256r1-program"}
@@ -178,8 +191,10 @@ getrandom = { git = "https://github.com/thewuhxyz/getrandom", branch = "0.1-zkvm
 solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
 solana-bpf-loader-program = { path = "crates/bpf_loader"}
 solana-compute-budget-program = {path = "crates/compute-budget"}
+solana-frozen-abi = { path = "crates/frozen-abi" }
 solana-measure = { path = "crates/measure" }
 solana-program-runtime = {path = "crates/program-runtime"}
+solana-sdk = { path = "crates/sdk", features = ["dev-context-only-utils"] }
 solana-secp256r1-program = {path = "crates/secp256r1-program"}
 solana-svm = { path = "crates/svm" }
 solana-system-program = {path = "crates/system"}

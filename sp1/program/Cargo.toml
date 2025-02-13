@@ -18,7 +18,3 @@ solana-sdk = {workspace = true}
 solana-svm = { workspace =  true }
 solana-system-program = {workspace = true}
 solana-type-overrides = {workspace = true}
-
-[target.'cfg(not(target_arch = "riscv32im-succinct-zkvm-elf"))'.dependencies]
-tracing-appender = "0.2.3" 
-# svm-runner = { path = "../../crates/svm-runner" }

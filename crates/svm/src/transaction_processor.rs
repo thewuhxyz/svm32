@@ -266,11 +266,16 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
         // Initialize metrics.
         let mut error_metrics = TransactionErrorMetrics::default();
         let mut execute_timings = ExecuteTimings::default();
-        
-        println!("3");
+
         println!("3");
 
-        let validation_results  = self.validate_fees(
+        measure_us!(println!("here in measure us"));
+
+        println!("3");
+
+        // let (validation_results, validate_fees_us) = (Vec::new(), 0);
+
+        let (validation_results, validate_fees_us) = measure_us!(self.validate_fees(
             callbacks,
             config.account_overrides,
             sanitized_txs,
@@ -279,13 +284,13 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
             environment
                 .fee_structure
                 .unwrap_or(&FeeStructure::default()),
+            // &RentCollector::default(),
             environment
                 .rent_collector
                 .unwrap_or(&RentCollector::default()),
-            &mut error_metrics
-        );
-        let validate_fees_us = 0;
-        
+            &mut error_metrics,
+        ));
+
         println!("4");
         let (mut program_accounts_map, filter_executable_us) =
             measure_us!(Self::filter_executable_program_accounts(
@@ -322,6 +327,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
         });
 
         println!("6");
+        // let (loaded_transactions, load_accounts_us) = (Vec::new(), 0);
         let (loaded_transactions, load_accounts_us) = measure_us!(load_accounts(
             callbacks,
             sanitized_txs,
@@ -407,7 +413,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
             .saturating_add_in_place(ExecuteTimingType::ProgramCacheUs, program_cache_us);
         execute_timings.saturating_add_in_place(ExecuteTimingType::LoadUs, load_accounts_us);
         execute_timings.saturating_add_in_place(ExecuteTimingType::ExecuteUs, execution_us);
-        
+
         println!("11");
 
         LoadAndExecuteSanitizedTransactionsOutput {
@@ -425,6 +431,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
         check_results: Vec<TransactionCheckResult>,
         feature_set: &FeatureSet,
         fee_structure: &FeeStructure,
+        // rent_collector: &RentCollector,
         rent_collector: &dyn SVMRentCollector,
         error_counters: &mut TransactionErrorMetrics,
     ) -> Vec<TransactionValidationResult> {
@@ -448,6 +455,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
                 })
             })
             .collect()
+        // Vec::new()
     }
 
     // Loads transaction fee payer, collects rent if necessary, then calculates
@@ -461,6 +469,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
         checked_details: CheckedTransactionDetails,
         feature_set: &FeatureSet,
         fee_structure: &FeeStructure,
+        // rent_collector: &dyn SVMRentCollector,
         rent_collector: &dyn SVMRentCollector,
         error_counters: &mut TransactionErrorMetrics,
     ) -> transaction::Result<ValidatedTransactionDetails> {
