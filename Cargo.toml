@@ -17,7 +17,9 @@ members = [
     "crates/system",
     "crates/vote",
     "sp1/*",
+    "crates/runner-types",
 ]
+exclude = ["onchain/programs/*"]
 resolver = "2"
 
 [workspace.package]
@@ -35,25 +37,25 @@ bytemuck = "1.21.0"
 byteorder = "1.5.0"
 clap = "4.0"
 crossbeam-channel = "0.5.14"
-ed25519-dalek = "=1.0.1"
+ed25519-dalek = "^1.0"
 ecdsa = { version = "0.16", features = [] }
 enum-iterator = "1.5.0"
 env_logger = "0.9.3"
 generic-array = { version = "0.14.7", default-features = false }
 # getrandom = { git = "https://github.com/sp1-patches/getrandom" }
 # getrandom = { version = "0.3.1" }
-im = "15.1.0"
-itertools = "0.12.1"
-jsonrpc-core = "18.0.0"
-jsonrpc-core-client = "18.0.0"
-jsonrpc-derive = "18.0.0"
-jsonrpc-http-server = "18.0.0"
-jsonrpc-ipc-server = "18.0.0"
-jsonrpc-pubsub = "18.0.0"
-k256 = "0.13"
+im = "^15.1.0"
+itertools = "^0.12.1"
+jsonrpc-core = "^18.0.0"
+jsonrpc-core-client = "^18.0.0"
+jsonrpc-derive = "^18.0.0"
+jsonrpc-http-server = "^18.0.0"
+jsonrpc-ipc-server = "^18.0.0"
+jsonrpc-pubsub = "^18.0.0"
+k256 = "^0.13"
 lazy_static = "1.5"
 libc = "0.2.169"
-libsecp256k1 = "=0.6"
+libsecp256k1 = "*"
 log = "0.4.22"
 memmap2 = "0.5.10"
 memoffset = "0.9"
@@ -68,6 +70,7 @@ prost-types = "=0.11.9"
 qualifier_attr = { version = "0.2.2", default-features = false }
 rand = "=0.8.5"
 regex = "1.11.1"
+runner-types = { path = "crates/runner-types" }
 # rand0-7 = { package = "rand", version = "0.7" }
 scopeguard = "1.2.0"
 serde = "1.0.217"
@@ -87,7 +90,7 @@ solana-compute-budget-interface = "0.0.2"
 solana-compute-budget-program = { path = "crates/compute-budget" }
 # solana-compute-budget-program = "=2.1.13"
 solana-client = "=2.1.13"
-solana-curve25519 = { version = "=2.1.13" }
+solana-curve25519 = { version = "^2.1.13" }
 solana-epoch-rewards = "0.0.3"
 solana-epoch-schedule = "=2.1.13"
 solana-ed25519-program = "1.8.16"
@@ -186,7 +189,7 @@ sp1-build = "4.1.1"
 
 
 [patch.crates-io]
-getrandom = { git = "https://github.com/thewuhxyz/getrandom", branch = "0.1-zkvm" }
+getrandom = { git = "https://github.com/nitro-svm/getrandom", branch = "0.1-zkvm" }
 # solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
 solana-bpf-loader-program = { path = "crates/bpf_loader" }
 solana-compute-budget-program = { path = "crates/compute-budget" }

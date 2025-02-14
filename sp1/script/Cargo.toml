@@ -9,6 +9,7 @@ serde = { workspace = true }
 solana-sdk = { workspace = true }
 sp1-sdk = { workspace = true }
 svm-runner = { workspace = true }
+runner-types = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 
 [build-dependencies]

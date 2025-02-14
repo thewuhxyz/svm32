@@ -1,8 +1,7 @@
 //! SVM runner executing transactions on the given accounts
 //!
-use serde::{Deserialize, Serialize};
-use solana_pubkey::Pubkey;
-use solana_sdk::account::{Account, ReadableAccount, WritableAccount};
+use runner_types::{ExecutionInput, ExecutionOutput};
+use solana_sdk::account::{ReadableAccount, WritableAccount};
 use solana_svm::transaction_processor::ExecutionRecordingConfig;
 mod data;
 mod mock_bank;
@@ -10,7 +9,7 @@ use {
     crate::mock_bank::{
         create_executable_environment, register_builtins, MockBankCallback, MockForkGraph,
     },
-    solana_sdk::transaction::{SanitizedTransaction, Transaction},
+    solana_sdk::transaction::SanitizedTransaction,
     solana_svm::{
         account_loader::CheckedTransactionDetails,
         transaction_processor::{
@@ -26,23 +25,6 @@ use {
 const EXECUTION_SLOT: u64 = 5; // The execution slot must be greater than the deployment slot
 const EXECUTION_EPOCH: u64 = 2; // The execution epoch must be greater than the deployment epoch
 const LAMPORTS_PER_SIGNATURE: u64 = 20;
-
-#[derive(Deserialize, Serialize)]
-pub struct RampTx {
-    pub is_onramp: bool,
-    pub user: Pubkey,
-    pub amount: u64,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct ExecutionInput {
-    pub accounts: Vec<(Pubkey, Account)>,
-    pub txs: Vec<Transaction>,
-    pub ramp_txs: Vec<RampTx>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct ExecutionOutput(Vec<(Pubkey, Account)>);
 
 pub fn runner(input: ExecutionInput) -> ExecutionOutput {
     let mock_bank = MockBankCallback::default();

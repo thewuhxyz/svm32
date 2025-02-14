@@ -19,6 +19,7 @@ lazy_static = { workspace = true }
 log = { workspace = true }
 percentage = { workspace = true }
 qualifier_attr = { workspace = true, optional = true }
+runner-types = { workspace = true }
 serde = { workspace = true, features = ["rc"] }
 serde_derive = { workspace = true }
 solana-bpf-loader-program = { workspace = true }

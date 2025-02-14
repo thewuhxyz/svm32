@@ -3,7 +3,8 @@
 #![no_main]
 sp1_zkvm::entrypoint!(main);
 
-use svm_runner_lib::*;
+use runner_types::ExecutionInput;
+use svm_runner_lib::runner;
 
 pub fn main() {
     // Read an input to the program.

@@ -1,4 +1,5 @@
 use clap::Parser;
+use runner_types::{ExecutionInput, RampTx};
 use solana_sdk::{
     account::Account, hash::Hash, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
     signature::Keypair, signer::Signer, system_instruction, system_program,
@@ -6,7 +7,6 @@ use solana_sdk::{
 };
 use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
 use std::vec;
-use svm_runner_lib::{ExecutionInput, RampTx};
 
 const ELF: &[u8] = include_elf!("zk-svm");
 

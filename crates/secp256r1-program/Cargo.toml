@@ -10,13 +10,11 @@ bytemuck = { workspace = true, features = ["derive"] }
 solana-feature-set = { workspace = true }
 solana-precompile-error = { workspace = true }
 solana-sdk-ids = { workspace = true }
-
-[target.'cfg(all(not(target_arch = "wasm32"), not(target_os = "solana")))'.dependencies]
 solana-instruction = { workspace = true, features = ["std"] }
 # k256 = { workspace =  true }
 # sha2 = { workspace = true }
-p256 = {workspace = true}
-ecdsa = {workspace = true}
+p256 = { workspace = true }
+ecdsa = { workspace = true }
 # openssl = { workspace = true }
 
 [dev-dependencies]
