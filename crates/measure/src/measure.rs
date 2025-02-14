@@ -3,7 +3,7 @@ use std::fmt;
 #[derive(Debug)]
 pub struct Measure {
     name: &'static str,
-    start: u64,
+    _start: u64,
     duration: u64,
 }
 
@@ -11,7 +11,7 @@ impl Measure {
     pub fn start(name: &'static str) -> Self {
         Self {
             name,
-            start: 0,
+            _start: 0,
             duration: 0,
         }
     }

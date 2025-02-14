@@ -1,5 +1,3 @@
-use solana_rbpf::program::SBPFVersion;
-
 pub use self::{
     cpi::{SyscallInvokeSignedC, SyscallInvokeSignedRust},
     logging::{
@@ -585,7 +583,7 @@ fn translate_type_inner<'a, T>(
     let host_addr = translate(memory_mapping, access_type, vm_addr, size_of::<T>() as u64)?;
     if !check_aligned {
         // just testing
-         Ok(unsafe { &mut *(host_addr as *mut T) })
+        Ok(unsafe { &mut *(host_addr as *mut T) })
         // Ok(unsafe { std::mem::transmute::<u64, &mut T>(host_addr) })
     } else if !address_is_aligned::<T>(host_addr) {
         Err(SyscallError::UnalignedPointer.into())

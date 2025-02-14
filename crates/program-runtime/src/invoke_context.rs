@@ -1,8 +1,7 @@
 use {
     crate::{
         loaded_programs::{
-            ProgramCacheEntry, ProgramCacheEntryType, ProgramCacheForTxBatch,
-            ProgramRuntimeEnvironments,
+            ProgramCacheEntryType, ProgramCacheForTxBatch, ProgramRuntimeEnvironments,
         },
         stable_log,
         sysvar_cache::SysvarCache,
@@ -19,21 +18,16 @@ use {
         vm::{Config, ContextObject, EbpfVm},
     },
     solana_sdk::{
-        account::{create_account_shared_data_for_test, AccountSharedData},
         bpf_loader_deprecated,
         clock::Slot,
-        epoch_schedule::EpochSchedule,
         hash::Hash,
-        instruction::{AccountMeta, InstructionError},
+        instruction::InstructionError,
         native_loader,
         precompiles::Precompile,
         pubkey::Pubkey,
         saturating_add_assign,
         stable_layout::stable_instruction::StableInstruction,
-        sysvar,
-        transaction_context::{
-            IndexOfAccount, InstructionAccount, TransactionAccount, TransactionContext,
-        },
+        transaction_context::{IndexOfAccount, InstructionAccount, TransactionContext},
     },
     solana_timings::{ExecuteDetailsTimings, ExecuteTimings},
     solana_type_overrides::sync::{atomic::Ordering, Arc},
@@ -568,7 +562,7 @@ impl<'a> InvokeContext<'a> {
         let mock_config = Config::default();
         let empty_memory_mapping =
             MemoryMapping::new(Vec::new(), &mock_config, &SBPFVersion::V1).unwrap();
-            // MemoryMapping::new(Vec::new(), &mock_config, SBPFVersion::V1).unwrap();
+        // MemoryMapping::new(Vec::new(), &mock_config, SBPFVersion::V1).unwrap();
         let mut vm = EbpfVm::new(
             self.program_cache_for_tx_batch
                 .environments

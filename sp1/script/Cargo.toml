@@ -1,10 +1,14 @@
 [package]
 version = "0.1.0"
-name = "chess-script"
+name = "zk-svm-script"
 edition = "2021"
 
 [dependencies]
-sp1-sdk = {workspace = true}
+bincode = { workspace = true }
+serde = { workspace = true }
+solana-sdk = { workspace = true }
+sp1-sdk = { workspace = true }
+svm-runner = { workspace = true }
 
 [build-dependencies]
-sp1-build = {workspace = true}
+sp1-build = { workspace = true }

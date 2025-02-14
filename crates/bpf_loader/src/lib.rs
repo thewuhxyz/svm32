@@ -7,7 +7,8 @@ pub mod syscalls;
 use {
     solana_compute_budget::compute_budget::MAX_INSTRUCTION_STACK_DEPTH,
     solana_feature_set::{
-        bpf_account_data_direct_mapping, enable_bpf_loader_set_authority_checked_ix,
+        bpf_account_data_direct_mapping,
+        enable_bpf_loader_set_authority_checked_ix,
         // remove_accounts_executable_flag_checks,
     },
     solana_log_collector::{ic_logger_msg, ic_msg, LogCollector},
@@ -49,7 +50,7 @@ use {
     },
     solana_type_overrides::sync::{atomic::Ordering, Arc},
     std::{cell::RefCell, mem, rc::Rc},
-    syscalls::{create_program_runtime_environment_v1, morph_into_deployment_environment_v1},
+    syscalls::morph_into_deployment_environment_v1,
 };
 
 pub const DEFAULT_LOADER_COMPUTE_UNITS: u64 = 570;

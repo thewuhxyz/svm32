@@ -9,14 +9,14 @@ members = [
     "crates/measure",
     "crates/sdk",
     "crates/secp256r1-program",
-    "crates/svm", 
+    "crates/svm",
     # "crates/svm-conformance", 
     # "crates/svm-rent-collector", 
     # "crates/svm-transaction", 
-    "crates/svm-runner", 
-    "crates/system", 
-    "crates/vote", 
-    "sp1/*"
+    "crates/svm-runner",
+    "crates/system",
+    "crates/vote",
+    "sp1/*",
 ]
 resolver = "2"
 
@@ -65,12 +65,12 @@ percentage = "0.1.0"
 prost = "=0.11.9"
 prost-build = "=0.11.9"
 prost-types = "=0.11.9"
-qualifier_attr = { version = "0.2.2", default-features = false}
+qualifier_attr = { version = "0.2.2", default-features = false }
 rand = "=0.8.5"
 regex = "1.11.1"
 # rand0-7 = { package = "rand", version = "0.7" }
 scopeguard = "1.2.0"
-serde = "1.0.217" 
+serde = "1.0.217"
 serde_bytes = "0.11.15"
 serde_derive = "1.0.217"
 serde_json = "1.0.138"
@@ -80,11 +80,11 @@ shuttle = "0.8.0"
 solana-account = { version = "=2.1.13" }
 solana-account-decoder = { version = "=2.1.13" }
 solana-bn254 = { version = "=2.1.13" }
-solana-bpf-loader-program = { path = "crates/bpf_loader"}
+solana-bpf-loader-program = { path = "crates/bpf_loader" }
 solana-clock = "=2.1.13"
 solana-compute-budget = { version = "=2.1.13", features = [] }
 solana-compute-budget-interface = "0.0.2"
-solana-compute-budget-program = {path = "crates/compute-budget"}
+solana-compute-budget-program = { path = "crates/compute-budget" }
 # solana-compute-budget-program = "=2.1.13"
 solana-client = "=2.1.13"
 solana-curve25519 = { version = "=2.1.13" }
@@ -95,16 +95,12 @@ solana-feature-set = "=2.1.13"
 solana-fee = "=2.1.13"
 solana-fee-calculator = "=2.1.13"
 solana-fee-structure = "0.0.2"
-solana-frozen-abi = { path = "crates/frozen-abi", features = [
-    "frozen-abi",
-] }
+solana-frozen-abi = { path = "crates/frozen-abi", features = ["frozen-abi"] }
 # solana-frozen-abi = { version = "=2.1.13", features = [
 #     "frozen-abi",
 # ] }
-solana-frozen-abi-macro = { version = "=2.1.13", features = [
-    "frozen-abi",
-] }
-solana-hash = {  version = "=2.1.13", default-features = false }
+solana-frozen-abi-macro = { version = "=2.1.13", features = ["frozen-abi"] }
+solana-hash = { version = "=2.1.13", default-features = false }
 solana-instruction = { version = "=0.0.3", features = ["std"] }
 # solana-instruction = { version = "=2.1.13", features = ["std"] }
 solana-keypair = "0.0.2"
@@ -124,7 +120,7 @@ solana-poseidon = { version = "=2.1.13" }
 solana-program = { version = "=2.1.13" }
 solana-program-memory = { version = "=2.1.13" }
 # solana-program-runtime = {version = "=2.1.13", features = []}
-solana-program-runtime = {path = "crates/program-runtime"}
+solana-program-runtime = { path = "crates/program-runtime" }
 solana-precompiles = { version = "=0.0.2" }
 solana-pubkey = "=2.1.13"
 solana_rbpf = "=0.8.5"
@@ -136,10 +132,12 @@ solana-rpc-client-api = "=2.1.13"
 solana-runtime-transaction = "=2.1.13"
 # solana-sbpf = "0.10.0"
 # solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils"] }
-solana-sdk = { path = "crates/sdk", features = ["dev-context-only-utils"] }# solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils", "openssl-vendored"] }
+solana-sdk = { path = "crates/sdk", features = [
+    "dev-context-only-utils",
+] } # solana-sdk = { version = "=2.1.13", features = ["dev-context-only-utils", "openssl-vendored"] }
 solana-sdk-ids = { version = "=0.0.3" }
 solana-secp256k1-program = "1.8.16"
-solana-secp256r1-program = {path = "crates/secp256r1-program"}
+solana-secp256r1-program = { path = "crates/secp256r1-program" }
 # solana-secp256r1-program = { version = "=2.1.13", features = ["openssl-vendored"] }
 solana-slot-hashes = { version = "=2.1.13" }
 solana-signature = "=2.1.13"
@@ -154,7 +152,7 @@ solana-svm-conformance = { version = "=2.1.13" }
 solana-svm-rent-collector = { version = "=2.1.13" }
 solana-svm-transaction = { version = "=2.1.13" }
 solana-system-interface = "=1.0.0"
-solana-system-program = {path = "crates/system"}
+solana-system-program = { path = "crates/system" }
 # solana-system-program = "=2.1.13"
 solana-sysvar-id = { version = "=2.1.13" }
 # solana-system-transaction = "0.0.2"
@@ -167,12 +165,13 @@ solana-transaction-status = { version = "=2.1.13" }
 solana-type-overrides = "=2.1.13"
 solana-version = { version = "=2.1.13" }
 solana-vote = { version = "=2.1.13" }
-solana-vote-program = {path = "crates/vote"}
+solana-vote-program = { path = "crates/vote" }
 spl-associated-token-account = "6"
 spl-token = "7"
 spl-token-2022 = "7"
 static_assertions = "1.1.0"
-subtle = "2.5" 
+subtle = "2.5"
+svm-runner = { path = "crates/svm-runner" }
 termcolor = "1.4"
 test-case = "3"
 thiserror = "1.0.68"
@@ -187,15 +186,15 @@ sp1-build = "4.1.1"
 
 
 [patch.crates-io]
-getrandom = { git = "https://github.com/thewuhxyz/getrandom", branch = "0.1-zkvm"}
+getrandom = { git = "https://github.com/thewuhxyz/getrandom", branch = "0.1-zkvm" }
 # solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
-solana-bpf-loader-program = { path = "crates/bpf_loader"}
-solana-compute-budget-program = {path = "crates/compute-budget"}
+solana-bpf-loader-program = { path = "crates/bpf_loader" }
+solana-compute-budget-program = { path = "crates/compute-budget" }
 solana-frozen-abi = { path = "crates/frozen-abi" }
 solana-measure = { path = "crates/measure" }
-solana-program-runtime = {path = "crates/program-runtime"}
+solana-program-runtime = { path = "crates/program-runtime" }
 solana-sdk = { path = "crates/sdk", features = ["dev-context-only-utils"] }
-solana-secp256r1-program = {path = "crates/secp256r1-program"}
+solana-secp256r1-program = { path = "crates/secp256r1-program" }
 solana-svm = { path = "crates/svm" }
-solana-system-program = {path = "crates/system"}
-solana-vote-program = {path = "crates/vote"}
+solana-system-program = { path = "crates/system" }
+solana-vote-program = { path = "crates/vote" }

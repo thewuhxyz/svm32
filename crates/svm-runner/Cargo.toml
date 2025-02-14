@@ -5,13 +5,13 @@ documentation = "https://docs.rs/solana-svm"
 version = { workspace = true }
 edition = { workspace = true }
 
-# [lib]
-# crate-type = ["lib"]
-# name = "svm_runner_lib"
+[lib]
+crate-type = ["lib"]
+name = "svm_runner_lib"
 
-[[bin]]
-name = "svm_runner"
-path = "src/main.rs"
+# [[bin]]
+# name = "svm_runner"
+# path = "src/main.rs"
 
 [dependencies]
 itertools = { workspace = true }

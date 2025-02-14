@@ -87,6 +87,6 @@ pub fn load_program(name: &str) -> &'static [u8] {
     }
 }
 
-pub fn programs() -> &'static [&'static str; 18] {
-    &PROGRAMS
-}
+// pub fn programs() -> &'static [&'static str; 18] {
+//     &PROGRAMS
+// }

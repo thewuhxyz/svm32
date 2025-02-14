@@ -20,7 +20,7 @@ use {
             BlockRelation, ForkGraph, ProgramCache, ProgramCacheEntry, ProgramRuntimeEnvironments,
         },
         solana_rbpf::{
-            program::{BuiltinFunction, BuiltinProgram, FunctionRegistry, SBPFVersion},
+            program::{BuiltinFunction, BuiltinProgram, FunctionRegistry},
             vm::Config,
         },
     },
