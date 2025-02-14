@@ -1,10 +1,12 @@
+use std::vec;
+
 use solana_sdk::{
     account::Account, hash::Hash, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
     signature::Keypair, signer::Signer, system_instruction, system_program,
     transaction::Transaction,
 };
 use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
-use svm_runner_lib::ExecutionInput;
+use svm_runner_lib::{ExecutionInput, RampTx};
 
 const ELF: &[u8] = include_elf!("zk-svm");
 
@@ -16,7 +18,7 @@ fn main() {
             (
                 kp_sender.try_pubkey().unwrap(),
                 Account {
-                    lamports: LAMPORTS_PER_SOL * 10,
+                    lamports: 0,
                     data: vec![],
                     owner: system_program::id(),
                     executable: false,
@@ -41,9 +43,14 @@ fn main() {
                 LAMPORTS_PER_SOL,
             )],
             Some(&kp_sender.try_pubkey().unwrap()),
-            &[kp_sender],
+            &[&kp_sender],
             Hash::new_from_array([7; 32]),
         )],
+        ramp_txs: vec![RampTx {
+            is_onramp: true,
+            user: kp_sender.try_pubkey().unwrap(),
+            amount: 10 * LAMPORTS_PER_SOL,
+        }],
     };
     let bytes: Vec<u8> = bincode::serialize(&input).unwrap();
 

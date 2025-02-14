@@ -1,9 +1,8 @@
 # SVM32
 
-**Q: Can I run the SVM on a 32-bit target?**
+## Usage
 
-A: ...
+### Verify the proof
 
-#### Reference
-
-- [Paytube](https://github.com/buffalojoec/paytube)
+1. `cd sp1/script`
+2. `cargo run`

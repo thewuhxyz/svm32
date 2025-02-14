@@ -2,7 +2,7 @@
 //!
 use serde::{Deserialize, Serialize};
 use solana_pubkey::Pubkey;
-use solana_sdk::account::Account;
+use solana_sdk::account::{Account, ReadableAccount, WritableAccount};
 use solana_svm::transaction_processor::ExecutionRecordingConfig;
 mod data;
 mod mock_bank;
@@ -28,9 +28,17 @@ const EXECUTION_EPOCH: u64 = 2; // The execution epoch must be greater than the 
 const LAMPORTS_PER_SIGNATURE: u64 = 20;
 
 #[derive(Deserialize, Serialize)]
+pub struct RampTx {
+    pub is_onramp: bool,
+    pub user: Pubkey,
+    pub amount: u64,
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct ExecutionInput {
     pub accounts: Vec<(Pubkey, Account)>,
     pub txs: Vec<Transaction>,
+    pub ramp_txs: Vec<RampTx>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -39,12 +47,26 @@ pub struct ExecutionOutput(Vec<(Pubkey, Account)>);
 pub fn runner(input: ExecutionInput) -> ExecutionOutput {
     let mock_bank = MockBankCallback::default();
 
+    // Insert accounts in the bank
     for (pk, account) in &input.accounts {
         mock_bank
             .account_shared_data
             .write()
             .unwrap()
             .insert(*pk, account.clone().into());
+    }
+
+    // Process ramp txs
+    for tx in &input.ramp_txs {
+        let mut writer = mock_bank.account_shared_data.write().unwrap();
+
+        let account = writer.get_mut(&tx.user).unwrap();
+
+        if tx.is_onramp {
+            account.set_lamports(account.lamports() + tx.amount);
+        } else {
+            account.set_lamports(account.lamports() - tx.amount);
+        }
     }
 
     let mut txs = vec![];
