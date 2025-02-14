@@ -8102,6 +8102,7 @@ name = "zk-svm-script"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "clap",
  "serde",
  "solana-sdk",
  "sp1-build",

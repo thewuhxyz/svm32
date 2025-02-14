@@ -33,7 +33,7 @@ bs58 = { version = "0.5.1", default-features = false }
 bv = "0.11.1"
 bytemuck = "1.21.0"
 byteorder = "1.5.0"
-clap = "2.33.1"
+clap = "4.0"
 crossbeam-channel = "0.5.14"
 ed25519-dalek = "=1.0.1"
 ecdsa = { version = "0.16", features = [] }
