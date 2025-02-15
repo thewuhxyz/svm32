@@ -1,7 +1,8 @@
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::*;
+// use anchor_spl::associated_token::AssociatedToken;
+// use anchor_spl::token::*;
 
+use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::ramp::Ramp;
 use crate::state::*;
@@ -48,8 +49,8 @@ impl Withdraw<'_> {
 
     pub fn handle(ctx: Context<Self>, args: WithdrawArgs) -> Result<()> {
         ctx.accounts.ramp.pending_withdraw -= args.amount;
-        ctx.accounts.platform.sub_lamports(args.amount);
-        ctx.accounts.ramper.add_lamports(args.amount);
+        ctx.accounts.platform.sub_lamports(args.amount)?;
+        ctx.accounts.ramper.add_lamports(args.amount)?;
 
         Ok(())
     }

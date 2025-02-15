@@ -1,19 +1,19 @@
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::*;
+// use anchor_spl::associated_token::AssociatedToken;
+// use anchor_spl::token::*;
 
-use crate::state::platform::Platform;
-use crate::state::*;
+use crate::state::{platform::Platform, PLATFORM_SEED_PREFIX};
+// use crate::state::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct ProveArgs {
+pub struct CreatePlatformArgs {
     pub id: Pubkey,
 }
 
 #[event_cpi]
 #[derive(Accounts)]
-#[instruction(args: ProveArgs)]
-pub struct Prove<'info> {
+#[instruction(args: CreatePlatformArgs)]
+pub struct CreatePlatform<'info> {
     #[account(mut)]
     pub sequencer: Signer<'info>,
     #[account(
@@ -27,16 +27,18 @@ pub struct Prove<'info> {
         bump
     )]
     pub platform: Account<'info, Platform>,
+    /// CHECK: CreatePlatform
+    pub creator: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
-impl Prove<'_> {
-    pub fn handle(ctx: Context<Self>, args: ProveArgs) -> Result<()> {
+impl CreatePlatform<'_> {
+    pub fn handle(ctx: Context<Self>, args: CreatePlatformArgs) -> Result<()> {
         ctx.accounts.platform.set_inner(Platform {
             bump: ctx.bumps.platform,
             id: args.id,
             sequencer: ctx.accounts.creator.key(),
-            last_state_hash: Hash::default(),
+            last_state_hash: [0;32], // Hash
             ramp_txs: vec![],
             deposit: 0,
             withdraw: 0,

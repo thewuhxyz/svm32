@@ -1,10 +1,13 @@
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::*;
+// use anchor_spl::associated_token::AssociatedToken;
+// use anchor_spl::token::*;
 
+use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::ramp::Ramp;
-use crate::state::*;
+use crate::state::{PLATFORM_SEED_PREFIX, RAMP_SEED_PREFIX};
+use crate::utils::RampTx;
+// use crate::state::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct AddRampTxArgs {
@@ -43,7 +46,7 @@ pub struct AddRampTx<'info> {
 }
 
 impl AddRampTx<'_> {
-    pub fn handle(ctx: Context<Self>, args: ProveArgs) -> Result<()> {
+    pub fn handle(ctx: Context<Self>, args: AddRampTxArgs) -> Result<()> {
         if ctx.accounts.ramp.ramper.eq(&Pubkey::default()) {
             ctx.accounts.ramp.set_inner(Ramp {
                 bump: ctx.bumps.ramp,
@@ -55,8 +58,8 @@ impl AddRampTx<'_> {
 
         if args.is_onramp {
             ctx.accounts.platform.deposit += args.amount;
-            ctx.accounts.ramper.sub_lamports(args.amount);
-            ctx.accounts.platform.add_lamports(args.amount);
+            ctx.accounts.ramper.sub_lamports(args.amount)?;
+            ctx.accounts.platform.add_lamports(args.amount)?;
         } else {
             ctx.accounts.platform.withdraw += args.amount;
             if ctx.accounts.platform.withdraw > ctx.accounts.platform.deposit {
@@ -70,6 +73,7 @@ impl AddRampTx<'_> {
         ctx.accounts.platform.ramp_txs.push(RampTx {
             is_onramp: args.is_onramp,
             amount: args.amount,
+            user: Pubkey::default(),
         });
 
         Ok(())

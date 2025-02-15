@@ -196,7 +196,7 @@ solana-compute-budget-program = { path = "crates/compute-budget" }
 solana-frozen-abi = { path = "crates/frozen-abi" }
 solana-measure = { path = "crates/measure" }
 solana-program-runtime = { path = "crates/program-runtime" }
-solana-sdk = { path = "crates/sdk", features = ["dev-context-only-utils"] }
+solana-sdk = { path = "crates/sdk" }
 solana-secp256r1-program = { path = "crates/secp256r1-program" }
 solana-svm = { path = "crates/svm" }
 solana-system-program = { path = "crates/system" }

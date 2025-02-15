@@ -22,7 +22,6 @@ macro_rules! measure_us {
 #[macro_export]
 macro_rules! meas_dur {
     ($expr:expr) => {{
-        
         let result = $expr;
         // (result, start.elapsed())
         (result, 0)

@@ -14,19 +14,17 @@ codegen-units = 1
 [workspace.dependencies]
 anchor-lang = "0.30.1"
 anchor-spl = "0.30.1"
-runner-types = { path = "../crates/runner-types" }
 
 [patch.crates-io]
 getrandom = { git = "https://github.com/nitro-svm/getrandom", branch = "0.1-zkvm" }
-# elliptic-curve = "=0.13.6"
-# solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
-solana-bpf-loader-program = { path = "../crates/bpf_loader" }
-solana-compute-budget-program = { path = "../crates/compute-budget" }
-solana-frozen-abi = { path = "../crates/frozen-abi" }
-solana-measure = { path = "../crates/measure" }
-solana-program-runtime = { path = "../crates/program-runtime" }
-solana-sdk = { path = "../crates/sdk", features = ["dev-context-only-utils"] }
-solana-secp256r1-program = { path = "../crates/secp256r1-program" }
-solana-svm = { path = "../crates/svm" }
-solana-system-program = { path = "../crates/system" }
-solana-vote-program = { path = "../crates/vote" }
+# # solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
+# solana-bpf-loader-program = { path = "../crates/bpf_loader" }
+# solana-compute-budget-program = { path = "../crates/compute-budget" }
+# solana-frozen-abi = { path = "../crates/frozen-abi" }
+# solana-measure = { path = "../crates/measure" }
+# solana-program-runtime = { path = "../crates/program-runtime" }
+# solana-sdk = { path = "../crates/sdk" }
+# solana-secp256r1-program = { path = "../crates/secp256r1-program" }
+# solana-svm = { path = "../crates/svm" }
+# solana-system-program = { path = "../crates/system" }
+# solana-vote-program = { path = "../crates/vote" }
