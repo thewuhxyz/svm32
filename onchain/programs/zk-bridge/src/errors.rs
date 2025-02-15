@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-#[error]
+#[error_code]
 pub enum PlatformError {
-    #[error("Insufficient deposits")]
+    #[msg("Insufficient deposits")]
     InsufficientDeposits,
-    #[error("Invalid state hash")]
+    #[msg("Invalid state hash")]
     InvalidStateHash,
 }

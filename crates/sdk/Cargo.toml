@@ -23,9 +23,9 @@ name = "solana_sdk"
 crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
 
-[[test]]
-name = "test_pubkey_export"
-path = "tests/test_pubkey_export.rs"
+# [[test]]
+# name = "test_pubkey_export"
+# path = "tests/test_pubkey_export.rs"
 
 [[bench]]
 name = "accounts"

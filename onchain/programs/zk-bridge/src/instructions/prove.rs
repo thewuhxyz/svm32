@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::*;
+// use anchor_spl::associated_token::AssociatedToken;
+// use anchor_spl::token::*;
 
 use crate::state::platform::Platform;
 use crate::state::*;
@@ -29,7 +29,7 @@ pub struct Prove<'info> {
 }
 
 impl Prove<'_> {
-    pub fn handle(ctx: Context<Self>, args: ProveArgs) -> Result<()> {
+    pub fn handle(_ctx: Context<Self>, _args: ProveArgs) -> Result<()> {
         unimplemented!();
 
         // Deserialize proof
@@ -38,6 +38,6 @@ impl Prove<'_> {
 
         // Empty pending ramp txs
 
-        Ok(())
+        // Ok(())
     }
 }

@@ -41,7 +41,6 @@ pub mod remove_accounts_executable_flag_checks {
     solana_pubkey::declare_id!("FfgtauHUWKeXTzjXkua9Px4tNGBFHKZ9WaigM5VbbzFx");
 }
 
-
 // for the load instructions
 pub(crate) type TransactionRent = u64;
 pub(crate) type TransactionProgramIndices = Vec<Vec<IndexOfAccount>>;
@@ -384,8 +383,7 @@ fn load_transaction_accounts<CB: TransactionProcessingCallback>(
             {
                 if let Some(owner_account) = callbacks.get_account_shared_data(owner_id) {
                     if !native_loader::check_id(owner_account.owner())
-                        || (!feature_set
-                            .is_active(&remove_accounts_executable_flag_checks::id())
+                        || (!feature_set.is_active(&remove_accounts_executable_flag_checks::id())
                             && !owner_account.executable())
                     {
                         error_metrics.invalid_program_for_execution += 1;

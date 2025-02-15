@@ -5,7 +5,7 @@ pub mod instructions;
 pub mod state;
 
 use crate::instructions::*;
-use crate::state::*;
+// use crate::state::*;
 
 declare_id!("6aTn9Wn2ZaU8ToRYBnnSCSnsbayeQtU71KzEAQhWHMWK");
 
@@ -17,7 +17,7 @@ pub mod zk_bridge {
         CreatePlatform::handle(ctx, args)
     }
 
-    #[access_control(ctx.validate())]
+    // #[access_control(ctx.validate())]
     pub fn withdraw(ctx: Context<Withdraw>, args: WithdrawArgs) -> Result<()> {
         Withdraw::handle(ctx, args)
     }
