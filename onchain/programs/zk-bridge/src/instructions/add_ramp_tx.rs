@@ -5,8 +5,7 @@ use anchor_lang::prelude::*;
 use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::ramp::Ramp;
-use crate::state::{PLATFORM_SEED_PREFIX, RAMP_SEED_PREFIX};
-use crate::utils::RampTx;
+use crate::state::{RampTx, PLATFORM_SEED_PREFIX, RAMP_SEED_PREFIX};
 // use crate::state::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
@@ -23,6 +22,9 @@ pub struct AddRampTx<'info> {
     pub ramper: Signer<'info>,
     #[account(
         mut,
+        realloc = 8 + std::mem::size_of_val(&platform) + std::mem::size_of::<RampTx>(), // allocate space for new ramp tx
+        realloc::payer = ramper,
+        realloc::zero = false,
         seeds = [
             PLATFORM_SEED_PREFIX,
             platform.id.as_ref(),
@@ -73,7 +75,7 @@ impl AddRampTx<'_> {
         ctx.accounts.platform.ramp_txs.push(RampTx {
             is_onramp: args.is_onramp,
             amount: args.amount,
-            user: Pubkey::default(),
+            user: ctx.accounts.ramper.key(),
         });
 
         Ok(())

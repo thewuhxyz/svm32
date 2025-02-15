@@ -27,8 +27,6 @@ pub struct CreatePlatform<'info> {
         bump
     )]
     pub platform: Account<'info, Platform>,
-    /// CHECK: CreatePlatform
-    pub creator: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -37,7 +35,7 @@ impl CreatePlatform<'_> {
         ctx.accounts.platform.set_inner(Platform {
             bump: ctx.bumps.platform,
             id: args.id,
-            sequencer: ctx.accounts.creator.key(),
+            sequencer: ctx.accounts.sequencer.key(),
             last_state_hash: [0;32], // Hash
             ramp_txs: vec![],
             deposit: 0,

@@ -1,4 +1,3 @@
-use crate::utils::RampTx;
 use anchor_lang::prelude::*;
 // use runner_types_core::RampTx;
 
@@ -17,7 +16,12 @@ pub struct Platform {
     pub withdraw: u64,
 }
 
-// impl A
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct RampTx {
+    pub is_onramp: bool,
+    pub user: Pubkey,
+    pub amount: u64,
+}
 
 #[macro_export]
 macro_rules! generate_network_seeds {
@@ -29,3 +33,4 @@ macro_rules! generate_network_seeds {
         ]
     }};
 }
+
