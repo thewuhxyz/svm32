@@ -1,12 +1,8 @@
-use anchor_lang::prelude::*;
-// use anchor_spl::associated_token::AssociatedToken;
-// use anchor_spl::token::*;
-
 use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::ramp::Ramp;
 use crate::state::{RampTx, PLATFORM_SEED_PREFIX, RAMP_SEED_PREFIX};
-// use crate::state::*;
+use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct AddRampTxArgs {

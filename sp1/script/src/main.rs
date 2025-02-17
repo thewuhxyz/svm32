@@ -1,8 +1,13 @@
 use clap::Parser;
 use runner_types::{ExecutionInput, RampTx};
 use solana_sdk::{
-    account::Account, hash::Hash, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
-    signature::Keypair, signer::Signer, system_instruction, system_program,
+    account::Account,
+    hash::{self, Hash},
+    native_token::LAMPORTS_PER_SOL,
+    pubkey::Pubkey,
+    signature::Keypair,
+    signer::Signer,
+    system_instruction, system_program,
     transaction::Transaction,
 };
 use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
@@ -79,12 +84,13 @@ fn main() {
     }
 
     // Default to test input if user does not provide
-    let bytes = if let Some(input) = args.input {
-        input
+    let input = if let Some(input) = args.input {
+        bincode::deserialize(&input).unwrap()
     } else {
-        let input = create_test_input();
-        bincode::serialize(&input).unwrap()
+        create_test_input()
     };
+
+    let bytes = bincode::serialize(&input).unwrap();
 
     let client = ProverClient::from_env();
     let mut stdin = SP1Stdin::new();
@@ -109,6 +115,10 @@ fn main() {
         let (pk, vk) = client.setup(ELF);
 
         // Generate the proof
+        println!(
+            "Initiale state hash: {}",
+            hash::hashv(&[&bincode::serialize(&input.accounts).unwrap()])
+        );
         println!("Starting proof generation...");
         let proof = client
             .prove(&pk, &stdin)

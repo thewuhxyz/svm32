@@ -23,5 +23,4 @@ solana = []
 [dependencies]
 anchor-lang = { workspace = true, features = ["init-if-needed", "event-cpi"] }
 anchor-spl = { workspace = true }
-# borsh = {workspace = true}
-# runner-types-core = { workspace = true }
+verifier = { workspace = true }

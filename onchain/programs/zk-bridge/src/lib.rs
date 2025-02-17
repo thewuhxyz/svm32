@@ -17,16 +17,19 @@ pub mod zk_bridge {
         CreatePlatform::handle(ctx, args)
     }
 
-    // #[access_control(ctx.validate())]
+    #[access_control(ctx.accounts.validate())]
     pub fn withdraw(ctx: Context<Withdraw>, args: WithdrawArgs) -> Result<()> {
         Withdraw::handle(ctx, args)
     }
 
+    /// Add a ramp transaction to the platform.
+    ///
+    /// **This can currently be used to DoS the platform by adding transactions faster than the sequencer can generate proofs.**
     pub fn add_ramp_tx(ctx: Context<AddRampTx>, args: AddRampTxArgs) -> Result<()> {
         AddRampTx::handle(ctx, args)
     }
 
-    pub fn prove(ctx: Context<Prove>, args: ProveArgs) -> Result<()> {
-        Prove::handle(ctx, args)
+    pub fn prove(ctx: Context<Prove>) -> Result<()> {
+        Prove::handle(ctx)
     }
 }

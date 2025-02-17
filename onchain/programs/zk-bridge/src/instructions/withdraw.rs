@@ -39,8 +39,8 @@ pub struct Withdraw<'info> {
 }
 
 impl Withdraw<'_> {
-    pub fn validate(ctx: Context<Self>) -> Result<()> {
-        if ctx.accounts.ramp.current_state_hash != ctx.accounts.platform.last_state_hash {
+    pub fn validate(&self) -> Result<()> {
+        if self.ramp.current_state_hash != self.platform.last_state_hash {
             return Err(PlatformError::InvalidStateHash.into());
         }
 
