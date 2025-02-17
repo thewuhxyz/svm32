@@ -1,11 +1,10 @@
 use clap::Parser;
 use runner_types::{hash_state, CommittedValues, ExecutionInput, RampTx, RollupState};
 use solana_sdk::{
-    account::Account, hash::Hash, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
-    signature::Keypair, signer::Signer, system_instruction, system_program,
-    transaction::Transaction,
+    account::Account, hash::Hash, native_token::LAMPORTS_PER_SOL, signature::Keypair,
+    signer::Signer, system_instruction, system_program, transaction::Transaction,
 };
-use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
+use sp1_sdk::{include_elf, HashableKey, ProverClient, SP1Stdin};
 use std::vec;
 
 const ELF: &[u8] = include_elf!("zk-svm");
@@ -27,8 +26,15 @@ struct Args {
 }
 
 fn create_test_input() -> ExecutionInput {
-    let kp_sender = Keypair::new();
-    let pk_receiver = Pubkey::new_unique();
+    let kp_sender_bytes: Vec<u8> =
+        serde_json::from_slice(include_bytes!("../../../onchain/keypairSender.json")).unwrap();
+    let kp_sender = Keypair::from_bytes(&kp_sender_bytes).unwrap();
+
+    let kp_receiver_bytes: Vec<u8> =
+        serde_json::from_slice(include_bytes!("../../../onchain/keypairReceiver.json")).unwrap();
+    let kp_receiver = Keypair::from_bytes(&kp_receiver_bytes).unwrap();
+    let pk_receiver = kp_receiver.pubkey();
+
     ExecutionInput {
         accounts: RollupState(vec![
             (
@@ -110,6 +116,7 @@ fn main() {
 
         // Setup the program for proving.
         let (pk, vk) = client.setup(ELF);
+        println!("Verifying key: {}", vk.bytes32());
 
         println!("Starting proof generation...");
         let mut proof = client

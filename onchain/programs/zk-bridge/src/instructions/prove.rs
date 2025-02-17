@@ -16,7 +16,7 @@ use crate::state::*;
 /// let vkey_hash = vk.bytes32();
 /// ```
 const ZK_BRIDGE_VKEY_HASH: &str =
-    "0x008d5e2aa8fe6d5f0f9b1ad59034a47517fe5f4a5439c7db4e5cc923f783a887";
+    "0x00b5f4f8596951753342637e0ab298e2072459a9aa8ad51116290b32d9206a55";
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
 pub struct SP1Groth16Proof {
