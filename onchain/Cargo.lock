@@ -704,7 +704,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a22f4561524cd949590d78d7d4c5df8f592430d221f7f3c9497bbafd8972120f"
 dependencies = [
  "ark-ec",
- "ark-ff 0.4.0",
+ "ark-ff 0.4.2",
  "ark-std 0.4.0",
 ]
 
@@ -714,9 +714,9 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52d7f0c52aff14f216200a9eee06a9990fee2e51fc9599e226df448ad3232886"
 dependencies = [
- "ark-ff 0.4.0",
+ "ark-ff 0.4.2",
  "ark-poly",
- "ark-serialize 0.4.0",
+ "ark-serialize 0.4.2",
  "ark-std 0.4.0",
  "derivative",
  "hashbrown 0.13.2",
@@ -745,13 +745,13 @@ dependencies = [
 
 [[package]]
 name = "ark-ff"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51ee31d8869a353433524dbd5a8f51f95cdafe7c66d458956ec13aa737198562"
+checksum = "ec847af850f44ad29048935519032c33da8aa03340876d351dfab5660d2966ba"
 dependencies = [
  "ark-ff-asm 0.4.2",
  "ark-ff-macros 0.4.2",
- "ark-serialize 0.4.0",
+ "ark-serialize 0.4.2",
  "ark-std 0.4.0",
  "derivative",
  "digest 0.10.7",
@@ -814,8 +814,8 @@ version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f6ec811462cabe265cfe1b102fcfe3df79d7d2929c2425673648ee9abfd0272"
 dependencies = [
- "ark-ff 0.4.0",
- "ark-serialize 0.4.0",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
  "ark-std 0.4.0",
  "derivative",
  "hashbrown 0.13.2",
@@ -833,9 +833,9 @@ dependencies = [
 
 [[package]]
 name = "ark-serialize"
-version = "0.4.0"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58ea39d00a8a4c832e6f6520e58ccec7bf909c4845863512e9b8656fd47df355"
+checksum = "adb7b85a02b83d2f22f89bd5cac66c9c89474240cb6207cb1efc16d098e822a5"
 dependencies = [
  "ark-serialize-derive",
  "ark-std 0.4.0",
@@ -2503,8 +2503,8 @@ source = "git+https://github.com/Dodecahedr0x/groth16-solana#a90dacc039983d5094b
 dependencies = [
  "ark-bn254",
  "ark-ec",
- "ark-ff 0.4.0",
- "ark-serialize 0.4.0",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
  "num-bigint 0.4.6",
  "solana-bn254",
  "solana-program",
@@ -4706,7 +4706,7 @@ checksum = "f5ef8fb1dd8de3870cb8400d51b4c2023854bbafd5431a3ac7e7317243e22d2f"
 dependencies = [
  "alloy-rlp",
  "ark-ff 0.3.0",
- "ark-ff 0.4.0",
+ "ark-ff 0.4.2",
  "bytes",
  "fastrlp 0.3.1",
  "fastrlp 0.4.0",
@@ -5292,8 +5292,8 @@ checksum = "c8f9c849dac8e6ef87c3c8035886df648ef5ec4c6d9d45b96fc045477e23a9b0"
 dependencies = [
  "ark-bn254",
  "ark-ec",
- "ark-ff 0.4.0",
- "ark-serialize 0.4.0",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
  "bytemuck",
  "solana-program",
  "thiserror 1.0.69",
@@ -7376,8 +7376,8 @@ name = "verifier"
 version = "0.1.0"
 dependencies = [
  "ark-bn254",
- "ark-ff 0.4.0",
- "ark-serialize 0.4.0",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
  "groth16-solana",
  "hex",
  "hex-literal",
@@ -7937,7 +7937,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4352d1081da6922701401cdd4cbf29a2723feb4cfabb5771f6fee8e9276da1c7"
 dependencies = [
- "ark-ff 0.4.0",
+ "ark-ff 0.4.2",
  "ark-std 0.4.0",
  "bitvec",
  "blake2",
