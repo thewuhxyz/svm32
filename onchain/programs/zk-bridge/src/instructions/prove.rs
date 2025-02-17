@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use runner_types::CommittedValues;
 use verifier::verify_proof;
 // use anchor_spl::associated_token::AssociatedToken;
 // use anchor_spl::token::*;
@@ -46,33 +47,43 @@ impl Prove<'_> {
     pub fn handle(ctx: Context<Self>) -> Result<()> {
         // unimplemented!();
 
-        // Deserialize the SP1Groth16Proof from the instruction data.
+        // Taking data from an account because it's too big to fit in an instruction.
         let groth16_proof = SP1Groth16Proof::try_from_slice(&ctx.accounts.proof.data.borrow())
-            .map_err(|_| PlatformError::InvalidProof)?;
+            .map_err(|_| PlatformError::InvalidProofData)?;
 
-        // Get the SP1 Groth16 verification key from the `sp1-solana` crate.
         let vk = verifier::GROTH16_VK_4_0_0_RC3_BYTES;
-
-        // Verify the proof.
         verify_proof(
             &groth16_proof.proof,
             &groth16_proof.sp1_public_inputs,
             &ZK_BRIDGE_VKEY_HASH,
             vk,
         )
-        .map_err(|_| ProgramError::InvalidInstructionData)?;
+        .map_err(|_| PlatformError::InvalidProof)?;
 
-        // Print out the public values.
-        let mut reader = groth16_proof.sp1_public_inputs.as_slice();
-        let n = u32::deserialize(&mut reader).unwrap();
-        let a = u32::deserialize(&mut reader).unwrap();
-        let b = u32::deserialize(&mut reader).unwrap();
-
-        // Deserialize proof
+        let reader = groth16_proof.sp1_public_inputs.as_slice();
+        let values: CommittedValues = bincode::deserialize(reader).unwrap();
 
         // Check that ramps txs match the ones in the platform
+        // Currently only check the count, could be improved to a hash of all txs
+        if values.0.ramp_txs.len() != ctx.accounts.platform.ramp_txs.len() {
+            return Err(PlatformError::MissingRampTxs.into());
+        }
 
         // Empty pending ramp txs
+        ctx.accounts.platform.ramp_txs = vec![];
+
+        // This can currently brick the platform, there should be a limit in number of ramp txs
+        for ramp_tx in values
+            .0
+            .ramp_txs
+            .iter()
+            .filter(|ramp_tx| !ramp_tx.is_onramp)
+        {
+            ctx.accounts.platform.withdraw += ramp_tx.amount;
+        }
+
+        // Update the platform state
+        ctx.accounts.platform.last_state_hash = values.1.to_bytes();
 
         Ok(())
     }

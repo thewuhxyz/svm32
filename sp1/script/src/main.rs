@@ -1,13 +1,8 @@
 use clap::Parser;
-use runner_types::{ExecutionInput, RampTx};
+use runner_types::{hash_state, CommittedValues, ExecutionInput, RampTx, RollupState};
 use solana_sdk::{
-    account::Account,
-    hash::{self, Hash},
-    native_token::LAMPORTS_PER_SOL,
-    pubkey::Pubkey,
-    signature::Keypair,
-    signer::Signer,
-    system_instruction, system_program,
+    account::Account, hash::Hash, native_token::LAMPORTS_PER_SOL, pubkey::Pubkey,
+    signature::Keypair, signer::Signer, system_instruction, system_program,
     transaction::Transaction,
 };
 use sp1_sdk::{include_elf, ProverClient, SP1Stdin};
@@ -35,7 +30,7 @@ fn create_test_input() -> ExecutionInput {
     let kp_sender = Keypair::new();
     let pk_receiver = Pubkey::new_unique();
     ExecutionInput {
-        accounts: vec![
+        accounts: RollupState(vec![
             (
                 kp_sender.try_pubkey().unwrap(),
                 Account {
@@ -56,7 +51,7 @@ fn create_test_input() -> ExecutionInput {
                     rent_epoch: 0,
                 },
             ),
-        ],
+        ]),
         txs: vec![Transaction::new_signed_with_payer(
             &[system_instruction::transfer(
                 &kp_sender.try_pubkey().unwrap(),
@@ -111,21 +106,21 @@ fn main() {
         // Record the number of cycles executed.
         println!("Number of cycles: {}", report.total_instruction_count());
     } else {
+        println!("Initial state hash: {}", hash_state(input.accounts));
+
         // Setup the program for proving.
         let (pk, vk) = client.setup(ELF);
 
-        // Generate the proof
-        println!(
-            "Initiale state hash: {}",
-            hash::hashv(&[&bincode::serialize(&input.accounts).unwrap()])
-        );
         println!("Starting proof generation...");
-        let proof = client
+        let mut proof = client
             .prove(&pk, &stdin)
             .groth16()
             .run()
             .expect("failed to generate proof");
         proof.save(args.output_path).expect("failed to save proof");
+
+        let output: CommittedValues = proof.public_values.read();
+        println!("Final state hash: {}", output.1);
 
         println!("Successfully generated proof!");
 
