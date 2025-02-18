@@ -1,5 +1,3 @@
-const initialStateHash = "8VJNjgYfFD9ifndnXUKRLSonUbmEQBQvZkLWdEYDMr1c";
-
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { ZkBridge } from "../target/types/zk_bridge";
@@ -7,6 +5,7 @@ import kpSender from "../keypairSender.json";
 import kpReceiver from "../keypairReceiver.json";
 import { assert } from "chai";
 
+const initialStateHash = "EukGGeg2sN2tETkZQP4kPTQxJQU859P8j5JGNLBKSt87";
 const senderKeypair = anchor.web3.Keypair.fromSecretKey(
   Uint8Array.from(Buffer.from(kpSender))
 );

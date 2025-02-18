@@ -127,7 +127,7 @@ fn main() {
         proof.save(args.output_path).expect("failed to save proof");
 
         let output: CommittedValues = proof.public_values.read();
-        println!("Final state hash: {}", output.1);
+        println!("Final state hash: {:?}", output.1);
 
         println!("Successfully generated proof!");
 

@@ -25,9 +25,6 @@
 use groth16_solana::groth16::Groth16Verifyingkey;
 use sha2::{Digest, Sha256};
 
-#[cfg(test)]
-mod test;
-
 mod utils;
 use utils::*;
 
