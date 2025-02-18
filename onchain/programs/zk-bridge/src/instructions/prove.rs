@@ -54,7 +54,7 @@ impl Prove<'_> {
         verify_proof(
             &groth16_proof.proof,
             &groth16_proof.sp1_public_inputs,
-            &ZK_BRIDGE_VKEY_HASH,
+            ZK_BRIDGE_VKEY_HASH,
             vk,
         )
         .map_err(|_| PlatformError::InvalidProof)?;

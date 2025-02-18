@@ -80,7 +80,7 @@ serde_json = "1.0.138"
 serde_with = { version = "3.11.0", default-features = false }
 sha2 = "0.10"
 shuttle = "0.8.0"
-solana-account = { version = "=2.1.13" }
+solana-account = { version = "=2.1.13", features = ["bincode"]}
 solana-account-decoder = { version = "=2.1.13" }
 solana-bn254 = { version = "=2.1.13" }
 solana-bpf-loader-program = { path = "crates/bpf_loader" }
@@ -103,7 +103,8 @@ solana-frozen-abi = { path = "crates/frozen-abi", features = ["frozen-abi"] }
 #     "frozen-abi",
 # ] }
 solana-frozen-abi-macro = { version = "=2.1.13", features = ["frozen-abi"] }
-solana-hash = { version = "=2.1.13", default-features = false }
+solana-hash = { version = "=2.1.13", features = ["serde"] }
+# solana-hash = { version = "=2.1.13", default-features = false }
 solana-instruction = { version = "=0.0.3", features = ["std"] }
 # solana-instruction = { version = "=2.1.13", features = ["std"] }
 solana-keypair = "0.0.2"
@@ -125,7 +126,7 @@ solana-program-memory = { version = "=2.1.13" }
 # solana-program-runtime = {version = "=2.1.13", features = []}
 solana-program-runtime = { path = "crates/program-runtime" }
 solana-precompiles = { version = "=0.0.2" }
-solana-pubkey = "=2.1.13"
+solana-pubkey = {version = "=2.1.13", features = ["serde"]}
 solana_rbpf = "=0.8.5"
 # solana_rbpf = {git = "https://github.com/thewuhxyz/rbpf"}
 solana-rent = "=2.1.13"
@@ -142,6 +143,7 @@ solana-sdk-ids = { version = "=0.0.3" }
 solana-secp256k1-program = "1.8.16"
 solana-secp256r1-program = { path = "crates/secp256r1-program" }
 # solana-secp256r1-program = { version = "=2.1.13", features = ["openssl-vendored"] }
+solana-sha256-hasher = {version = "=2.1.13", features = ["sha2"]}
 solana-slot-hashes = { version = "=2.1.13" }
 solana-signature = "=2.1.13"
 solana-signer = "0.0.2"
@@ -154,7 +156,7 @@ solana-svm = { path = "crates/svm" }
 solana-svm-conformance = { version = "=2.1.13" }
 solana-svm-rent-collector = { version = "=2.1.13" }
 solana-svm-transaction = { version = "=2.1.13" }
-solana-system-interface = "=1.0.0"
+solana-system-interface = {version = "=1.0.0", features = ["std", "bincode"]}
 solana-system-program = { path = "crates/system" }
 # solana-system-program = "=2.1.13"
 solana-sysvar-id = { version = "=2.1.13" }

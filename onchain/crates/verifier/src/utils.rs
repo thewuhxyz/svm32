@@ -11,7 +11,7 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum Error {
+pub enum VerifierError {
     #[error("G1 compression error")]
     G1CompressionError,
     #[error("G2 compression error")]
@@ -103,16 +103,16 @@ fn convert_endianness<const CHUNK_SIZE: usize, const ARRAY_SIZE: usize>(
     reversed
 }
 
-fn decompress_g1(g1_bytes: &[u8; 32]) -> Result<[u8; 64], Error> {
+fn decompress_g1(g1_bytes: &[u8; 32]) -> Result<[u8; 64], VerifierError> {
     let g1_bytes = gnark_compressed_x_to_ark_compressed_x(g1_bytes)?;
     let g1_bytes = convert_endianness::<32, 32>(&g1_bytes.as_slice().try_into().unwrap());
-    groth16_solana::decompression::decompress_g1(&g1_bytes).map_err(|_| Error::G1CompressionError)
+    groth16_solana::decompression::decompress_g1(&g1_bytes).map_err(|_| VerifierError::G1CompressionError)
 }
 
-fn decompress_g2(g2_bytes: &[u8; 64]) -> Result<[u8; 128], Error> {
+fn decompress_g2(g2_bytes: &[u8; 64]) -> Result<[u8; 128], VerifierError> {
     let g2_bytes = gnark_compressed_x_to_ark_compressed_x(g2_bytes)?;
     let g2_bytes = convert_endianness::<64, 64>(&g2_bytes.as_slice().try_into().unwrap());
-    groth16_solana::decompression::decompress_g2(&g2_bytes).map_err(|_| Error::G2CompressionError)
+    groth16_solana::decompression::decompress_g2(&g2_bytes).map_err(|_| VerifierError::G2CompressionError)
 }
 
 const GNARK_MASK: u8 = 0b11 << 6;
@@ -125,7 +125,7 @@ const ARK_COMPRESSED_POSTIVE: u8 = 0b00 << 6;
 const ARK_COMPRESSED_NEGATIVE: u8 = 0b10 << 6;
 const ARK_COMPRESSED_INFINITY: u8 = 0b01 << 6;
 
-fn gnark_flag_to_ark_flag(msb: u8) -> Result<u8, Error> {
+fn gnark_flag_to_ark_flag(msb: u8) -> Result<u8, VerifierError> {
     let gnark_flag = msb & GNARK_MASK;
 
     let ark_flag = match gnark_flag {
@@ -133,16 +133,16 @@ fn gnark_flag_to_ark_flag(msb: u8) -> Result<u8, Error> {
         GNARK_COMPRESSED_NEGATIVE => ARK_COMPRESSED_NEGATIVE,
         GNARK_COMPRESSED_INFINITY => ARK_COMPRESSED_INFINITY,
         _ => {
-            return Err(Error::InvalidInput);
+            return Err(VerifierError::InvalidInput);
         }
     };
 
     Ok(msb & !ARK_MASK | ark_flag)
 }
 
-fn gnark_compressed_x_to_ark_compressed_x(x: &[u8]) -> Result<Vec<u8>, Error> {
+fn gnark_compressed_x_to_ark_compressed_x(x: &[u8]) -> Result<Vec<u8>, VerifierError> {
     if x.len() != 32 && x.len() != 64 {
-        return Err(Error::InvalidInput);
+        return Err(VerifierError::InvalidInput);
     }
     let mut x_copy = x.to_owned();
 
@@ -153,9 +153,9 @@ fn gnark_compressed_x_to_ark_compressed_x(x: &[u8]) -> Result<Vec<u8>, Error> {
     Ok(x_copy)
 }
 
-fn uncompressed_bytes_to_g1_point(buf: &[u8]) -> Result<G1Affine, Error> {
+fn uncompressed_bytes_to_g1_point(buf: &[u8]) -> Result<G1Affine, VerifierError> {
     if buf.len() != 64 {
-        return Err(Error::InvalidInput);
+        return Err(VerifierError::InvalidInput);
     };
 
     let (x_bytes, y_bytes) = buf.split_at(32);
@@ -166,34 +166,34 @@ fn uncompressed_bytes_to_g1_point(buf: &[u8]) -> Result<G1Affine, Error> {
     Ok(G1Affine::new_unchecked(x, y))
 }
 
-fn negate_g1(g1_bytes: &[u8; 64]) -> Result<[u8; 64], Error> {
+fn negate_g1(g1_bytes: &[u8; 64]) -> Result<[u8; 64], VerifierError> {
     let g1 = -uncompressed_bytes_to_g1_point(g1_bytes)?;
     let mut g1_bytes = [0u8; 64];
     g1.serialize_uncompressed(&mut g1_bytes[..])
-        .map_err(|_| Error::G1CompressionError)?;
+        .map_err(|_| VerifierError::G1CompressionError)?;
     Ok(convert_endianness::<32, 64>(
         &g1_bytes.as_slice().try_into().unwrap(),
     ))
 }
 
-pub(crate) fn load_proof_from_bytes(buffer: &[u8]) -> Result<Proof, Error> {
+pub(crate) fn load_proof_from_bytes(buffer: &[u8]) -> Result<Proof, VerifierError> {
     Ok(Proof {
         pi_a: negate_g1(
             &buffer[..64]
                 .try_into()
-                .map_err(|_| Error::G1CompressionError)?,
+                .map_err(|_| VerifierError::G1CompressionError)?,
         )?,
         pi_b: buffer[64..192]
             .try_into()
-            .map_err(|_| Error::G2CompressionError)?,
+            .map_err(|_| VerifierError::G2CompressionError)?,
         pi_c: buffer[192..256]
             .try_into()
-            .map_err(|_| Error::G1CompressionError)?,
+            .map_err(|_| VerifierError::G1CompressionError)?,
     })
 }
 pub(crate) fn load_groth16_verifying_key_from_bytes(
     buffer: &[u8],
-) -> Result<VerificationKey, Error> {
+) -> Result<VerificationKey, VerifierError> {
     // Note that g1_beta and g1_delta are not used in the verification process.
     let g1_alpha = decompress_g1(buffer[..32].try_into().unwrap())?;
     let g2_beta = decompress_g2(buffer[64..128].try_into().unwrap())?;
@@ -239,14 +239,14 @@ pub(crate) fn load_groth16_verifying_key_from_bytes(
     })
 }
 
-pub(crate) fn load_public_inputs_from_bytes(buffer: &[u8]) -> Result<PublicInputs<2>, Error> {
+pub(crate) fn load_public_inputs_from_bytes(buffer: &[u8]) -> Result<PublicInputs<2>, VerifierError> {
     let mut bytes = [0u8; 64];
     bytes[1..].copy_from_slice(buffer); // vkey_hash is 31 bytes
 
     Ok(PublicInputs::<2> {
         inputs: [
-            bytes[..32].try_into().map_err(|_| Error::InvalidInput)?, // vkey_hash
-            bytes[32..].try_into().map_err(|_| Error::InvalidInput)?, // committed_values_digest
+            bytes[..32].try_into().map_err(|_| VerifierError::InvalidInput)?, // vkey_hash
+            bytes[32..].try_into().map_err(|_| VerifierError::InvalidInput)?, // committed_values_digest
         ],
     })
 }
@@ -273,7 +273,7 @@ pub fn groth16_public_values(sp1_vkey_hash: &[u8; 32], sp1_public_inputs: &[u8])
 }
 
 /// Decodes the sp1 vkey hash from the string from bytes32.
-pub fn decode_sp1_vkey_hash(sp1_vkey_hash: &str) -> Result<[u8; 32], Error> {
-    let bytes = hex::decode(&sp1_vkey_hash[2..]).map_err(|_| Error::InvalidProgramVkeyHash)?;
-    bytes.try_into().map_err(|_| Error::InvalidProgramVkeyHash)
+pub fn decode_sp1_vkey_hash(sp1_vkey_hash: &str) -> Result<[u8; 32], VerifierError> {
+    let bytes = hex::decode(&sp1_vkey_hash[2..]).map_err(|_| VerifierError::InvalidProgramVkeyHash)?;
+    bytes.try_into().map_err(|_| VerifierError::InvalidProgramVkeyHash)
 }

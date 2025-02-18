@@ -39,7 +39,7 @@ pub const GROTH16_VK_2_0_0_BYTES: &[u8] = include_bytes!("../vk/v2.0.0/groth16_v
 /// The public inputs are the vkey hash and the commited values digest, concatenated.
 /// The proof is a decompressed G1 element, followed by a decompressed G2 element, followed by a
 /// decompressed G1 element.
-pub fn verify_proof_raw(proof: &[u8], public_inputs: &[u8], vk: &[u8]) -> Result<(), Error> {
+pub fn verify_proof_raw(proof: &[u8], public_inputs: &[u8], vk: &[u8]) -> Result<(), VerifierError> {
     let proof = load_proof_from_bytes(proof)?;
     let vk = load_groth16_verifying_key_from_bytes(vk)?;
     let public_inputs = load_public_inputs_from_bytes(public_inputs)?;
@@ -60,14 +60,14 @@ pub fn verify_proof_raw(proof: &[u8], public_inputs: &[u8], vk: &[u8]) -> Result
         &public_inputs.inputs,
         &vk,
     )
-    .map_err(|_| Error::VerificationError)?;
+    .map_err(|_| VerifierError::VerificationError)?;
 
-    if verifier.verify().map_err(|_| Error::VerificationError)? {
+    if verifier.verify().map_err(|_| VerifierError::VerificationError)? {
         println!("Verification successful.");
         Ok(())
     } else {
         println!("Verification failed.");
-        Err(Error::VerificationError)
+        Err(VerifierError::VerificationError)
     }
 }
 
@@ -85,7 +85,7 @@ pub fn verify_proof(
     sp1_public_inputs: &[u8],
     sp1_vkey_hash: &str,
     groth16_vk: &[u8],
-) -> Result<(), Error> {
+) -> Result<(), VerifierError> {
     // Hash the vk and get the first 4 bytes.
     let groth16_vk_hash: [u8; 4] = Sha256::digest(groth16_vk)[..4].try_into().unwrap();
 
@@ -95,7 +95,7 @@ pub fn verify_proof(
     // SP1 prepends the raw Groth16 proof with the first 4 bytes of the groth16 vkey to
     // faciliate this check.
     if groth16_vk_hash != proof[..4] {
-        return Err(Error::Groth16VkeyHashMismatch);
+        return Err(VerifierError::Groth16VkeyHashMismatch);
     }
 
     let sp1_vkey_hash = decode_sp1_vkey_hash(sp1_vkey_hash)?;
