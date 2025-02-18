@@ -10,7 +10,6 @@ pub struct AddRampTxArgs {
     pub amount: u64,
 }
 
-#[event_cpi]
 #[derive(Accounts)]
 #[instruction(args: AddRampTxArgs)]
 pub struct AddRampTx<'info> {
@@ -18,9 +17,6 @@ pub struct AddRampTx<'info> {
     pub ramper: Signer<'info>,
     #[account(
         mut,
-        realloc = 8 + std::mem::size_of_val(&platform) + std::mem::size_of::<RampTx>(), // allocate space for new ramp tx
-        realloc::payer = ramper,
-        realloc::zero = false,
         seeds = [
             PLATFORM_SEED_PREFIX,
             platform.id.as_ref(),

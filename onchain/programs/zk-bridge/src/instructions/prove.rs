@@ -24,7 +24,6 @@ pub struct SP1Groth16Proof {
     pub sp1_public_inputs: Vec<u8>,
 }
 
-#[event_cpi]
 #[derive(Accounts)]
 pub struct Prove<'info> {
     #[account(mut)]

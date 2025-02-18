@@ -21,7 +21,7 @@ custom-panic = []
 solana = []
 
 [dependencies]
-anchor-lang = { workspace = true, features = ["init-if-needed", "event-cpi"] }
+anchor-lang = { workspace = true, features = ["init-if-needed"] }
 anchor-spl = { workspace = true }
 bincode = { workspace = true }
 verifier = { workspace = true }

@@ -12,7 +12,6 @@ pub struct WithdrawArgs {
     pub amount: u64,
 }
 
-#[event_cpi]
 #[derive(Accounts)]
 #[instruction(args: WithdrawArgs)]
 pub struct Withdraw<'info> {

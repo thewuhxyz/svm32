@@ -11,7 +11,6 @@ pub struct CreatePlatformArgs {
     pub initial_state_hash: [u8; 32],
 }
 
-#[event_cpi]
 #[derive(Accounts)]
 #[instruction(args: CreatePlatformArgs)]
 pub struct CreatePlatform<'info> {
