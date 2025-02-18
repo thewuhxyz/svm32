@@ -8,9 +8,9 @@ use crate::state::{platform::Platform, PLATFORM_SEED_PREFIX};
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct CreatePlatformArgs {
     pub id: Pubkey,
+    pub initial_state_hash: [u8; 32],
 }
 
-#[event_cpi]
 #[derive(Accounts)]
 #[instruction(args: CreatePlatformArgs)]
 pub struct CreatePlatform<'info> {
@@ -36,7 +36,7 @@ impl CreatePlatform<'_> {
             bump: ctx.bumps.platform,
             id: args.id,
             sequencer: ctx.accounts.sequencer.key(),
-            last_state_hash: [0;32], // Hash
+            last_state_hash: args.initial_state_hash,
             ramp_txs: vec![],
             deposit: 0,
             withdraw: 0,

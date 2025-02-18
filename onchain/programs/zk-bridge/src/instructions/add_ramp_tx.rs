@@ -1,12 +1,8 @@
-use anchor_lang::prelude::*;
-// use anchor_spl::associated_token::AssociatedToken;
-// use anchor_spl::token::*;
-
 use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::ramp::Ramp;
 use crate::state::{RampTx, PLATFORM_SEED_PREFIX, RAMP_SEED_PREFIX};
-// use crate::state::*;
+use anchor_lang::prelude::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct AddRampTxArgs {
@@ -14,7 +10,6 @@ pub struct AddRampTxArgs {
     pub amount: u64,
 }
 
-#[event_cpi]
 #[derive(Accounts)]
 #[instruction(args: AddRampTxArgs)]
 pub struct AddRampTx<'info> {
@@ -22,9 +17,6 @@ pub struct AddRampTx<'info> {
     pub ramper: Signer<'info>,
     #[account(
         mut,
-        realloc = 8 + std::mem::size_of_val(&platform) + std::mem::size_of::<RampTx>(), // allocate space for new ramp tx
-        realloc::payer = ramper,
-        realloc::zero = false,
         seeds = [
             PLATFORM_SEED_PREFIX,
             platform.id.as_ref(),

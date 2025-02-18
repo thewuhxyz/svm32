@@ -3,7 +3,7 @@
 #![no_main]
 sp1_zkvm::entrypoint!(main);
 
-use runner_types::ExecutionInput;
+use runner_types::{hash_state, ExecutionInput};
 use svm_runner_lib::runner;
 
 pub fn main() {
@@ -16,5 +16,5 @@ pub fn main() {
 
     // Commit to the input and output
     sp1_zkvm::io::commit(&input_bytes);
-    sp1_zkvm::io::commit(&output);
+    sp1_zkvm::io::commit(&hash_state(output));
 }

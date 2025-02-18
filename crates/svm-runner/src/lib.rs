@@ -1,6 +1,6 @@
 //! SVM runner executing transactions on the given accounts
 //!
-use runner_types::{ExecutionInput, ExecutionOutput};
+use runner_types::{ExecutionInput, RollupState};
 use solana_sdk::account::{ReadableAccount, WritableAccount};
 use solana_svm::transaction_processor::ExecutionRecordingConfig;
 mod data;
@@ -26,11 +26,11 @@ const EXECUTION_SLOT: u64 = 5; // The execution slot must be greater than the de
 const EXECUTION_EPOCH: u64 = 2; // The execution epoch must be greater than the deployment epoch
 const LAMPORTS_PER_SIGNATURE: u64 = 20;
 
-pub fn runner(input: ExecutionInput) -> ExecutionOutput {
+pub fn runner(input: ExecutionInput) -> RollupState {
     let mock_bank = MockBankCallback::default();
 
     // Insert accounts in the bank
-    for (pk, account) in &input.accounts {
+    for (pk, account) in &input.accounts.0 {
         mock_bank
             .account_shared_data
             .write()
@@ -100,9 +100,10 @@ pub fn runner(input: ExecutionInput) -> ExecutionOutput {
 
     println!("Batch Result {:#?}", result.processing_results);
 
-    ExecutionOutput(
+    RollupState(
         input
             .accounts
+            .0
             .iter()
             .map(|(pk, _account)| {
                 (

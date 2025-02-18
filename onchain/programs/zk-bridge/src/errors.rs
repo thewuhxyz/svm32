@@ -6,4 +6,10 @@ pub enum PlatformError {
     InsufficientDeposits,
     #[msg("Invalid state hash")]
     InvalidStateHash,
+    #[msg("Invalid proof data")]
+    InvalidProofData,
+    #[msg("Invalid proof")]
+    InvalidProof,
+    #[msg("Missing ramp txs")]
+    MissingRampTxs,
 }
