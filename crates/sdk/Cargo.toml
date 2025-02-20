@@ -218,6 +218,7 @@ version = "=2.1.13"
 features = ["serde"]
 
 [dependencies.solana-instruction]
+# workspace = true
 version = "=2.1.13"
 default-features = false
 

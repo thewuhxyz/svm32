@@ -1,0 +1,15 @@
+[package]
+name = "svm-runner-types"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bincode = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+solana-sdk = { workspace = true }
+# solana-account = {workspace = true}
+# solana-program = { workspace = true }
+# solana-pubkey = {workspace = true}
+# solana-hash = {workspace = true}
+# solana-sha256-hasher = {workspace = true}
+# solana-transaction = { workspace = true, features = ["bincode"]}

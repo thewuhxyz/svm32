@@ -1,9 +1,0 @@
-[package]
-name = "runner-types"
-version.workspace = true
-edition.workspace = true
-
-[dependencies]
-bincode = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-solana-sdk = { workspace = true }
