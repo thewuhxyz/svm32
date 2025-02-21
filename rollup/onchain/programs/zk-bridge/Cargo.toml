@@ -24,6 +24,7 @@ solana = []
 anchor-lang = { workspace = true, features = ["init-if-needed"] }
 anchor-spl = { workspace = true }
 bincode = { workspace = true }
+borsh = { workspace = true }
 solana-bincode = {version = "=2.1.13"}
 verifier = { workspace = true }
 # svm-runner-types = { workspace = true }

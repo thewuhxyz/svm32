@@ -103,7 +103,7 @@ solana-fee-calculator = "=2.1.13"
 solana-fee-structure = "0.0.2"
 solana-frozen-abi = { path = "crates/frozen-abi", features = ["frozen-abi"] }
 solana-frozen-abi-macro = { version = "=2.1.13", features = ["frozen-abi"] }
-solana-hash = { version = "=2.1.13", features = ["serde"] }
+solana-hash = { version = "=2.1.13", features = ["serde", "borsh"] }
 solana-instruction = { version = "=0.0.3", features = ["std"] }
 solana-keypair = "0.0.2"
 solana-last-restart-slot = { version = "=2.1.13" }
@@ -161,6 +161,7 @@ static_assertions = "1.1.0"
 subtle = "2.5"
 svm-runner = { path = "rollup/svm-runner/lib" }
 svm-runner-types = { path = "rollup/svm-runner/types" }
+svm-runner-types-anchor = { path = "rollup/svm-runner/types-anchor" }
 termcolor = "1.4"
 test-case = "3"
 thiserror = "1.0.68"

@@ -4,6 +4,7 @@ name = "zk-svm"
 edition = "2021"
 
 [dependencies]
+borsh = {workspace = true}
 bincode = { workspace = true }
 lazy_static = { workspace = true }
 sp1-zkvm = { workspace = true }
@@ -19,3 +20,4 @@ solana-system-program = { workspace = true }
 solana-type-overrides = { workspace = true }
 svm-runner = { workspace = true }
 svm-runner-types = { workspace = true }
+svm-runner-types-anchor = { workspace = true }

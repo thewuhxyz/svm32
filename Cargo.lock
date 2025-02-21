@@ -7937,6 +7937,7 @@ dependencies = [
  "qualifier_attr",
  "serde",
  "serde_derive",
+ "solana-account",
  "solana-bpf-loader-program",
  "solana-compute-budget",
  "solana-compute-budget-program",
@@ -7958,6 +7959,7 @@ dependencies = [
  "solana-type-overrides",
  "solana-vote",
  "svm-runner-types",
+ "svm-runner-types-anchor",
  "thiserror 1.0.69",
 ]
 
@@ -7976,7 +7978,9 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "borsh 1.5.5",
+ "generic-array 0.14.7",
  "serde",
+ "serde_bytes",
  "solana-account",
  "solana-hash",
  "solana-program",
@@ -9303,6 +9307,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "bincode",
+ "borsh 1.5.5",
  "solana-bincode",
  "svm-runner-types-anchor",
  "verifier",
@@ -9313,6 +9318,7 @@ name = "zk-svm"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "borsh 1.5.5",
  "lazy_static",
  "solana-bpf-loader-program",
  "solana-compute-budget",
@@ -9327,6 +9333,7 @@ dependencies = [
  "sp1-zkvm",
  "svm-runner",
  "svm-runner-types",
+ "svm-runner-types-anchor",
 ]
 
 [[package]]
@@ -9344,6 +9351,7 @@ dependencies = [
  "sp1-sdk",
  "svm-runner",
  "svm-runner-types",
+ "svm-runner-types-anchor",
 ]
 
 [[package]]
@@ -9351,6 +9359,7 @@ name = "zk-svm-script"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "borsh 1.5.5",
  "clap",
  "serde",
  "serde_json",
@@ -9359,6 +9368,7 @@ dependencies = [
  "sp1-sdk",
  "svm-runner",
  "svm-runner-types",
+ "svm-runner-types-anchor",
 ]
 
 [[package]]

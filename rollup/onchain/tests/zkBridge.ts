@@ -5,6 +5,7 @@ import kpSender from "../keypairSender.json";
 import kpReceiver from "../keypairReceiver.json";
 import { assert } from "chai";
 import fs from "fs";
+import * as borsh from "borsh";
 
 const initialStateHash = "EukGGeg2sN2tETkZQP4kPTQxJQU859P8j5JGNLBKSt87";
 const senderKeypair = anchor.web3.Keypair.fromSecretKey(
@@ -14,6 +15,20 @@ const receiverKeypair = anchor.web3.Keypair.fromSecretKey(
 	Uint8Array.from(Buffer.from(kpReceiver))
 );
 const proof = new Uint8Array(fs.readFileSync("../zk/borsh/proof_borsh.bin"));
+// const proof = new Uint8Array(fs.readFileSync("../zk/borsh/proof_borsh_for_program.bin"));
+
+export type Proof = {
+	proof: Uint8Array;
+	publicInput: Uint8Array;
+};
+
+// Define the schema for the proof data
+export const proofSchema: borsh.Schema = {
+	struct: {
+		proof: { array: { type: "u8" } },
+		publicInput: { array: { type: "u8" } },
+	},
+};
 
 describe("zk-bridge", () => {
 	// Configure the client to use the local cluster.
@@ -128,8 +143,20 @@ describe("zk-bridge", () => {
 
 		console.log("upload proof");
 
+		let _proof = borsh.deserialize(proofSchema, proof) as Proof;
+
+		console.log("proof len:", proof.length);
+
+    console.log("_proof:", _proof.proof)
+    console.log("_proof len:", _proof.proof.length)
+    console.log("_public_input:", _proof.publicInput)
+    console.log("_public_input len:", _proof.publicInput.length)
+
 		await program.methods
-			.prove({ proof: Buffer.from(proof) })
+			.prove({
+				proof: Buffer.from(_proof.proof),
+				publicInput: Buffer.from(_proof.publicInput),
+			})
 			.accountsPartial({
 				prover: senderKeypair.publicKey,
 				// proof: proofKey,

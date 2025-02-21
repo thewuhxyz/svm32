@@ -4,6 +4,7 @@ name = "zk-svm-script"
 edition = "2021"
 
 [dependencies]
+borsh = { workspace = true }
 bincode = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -11,6 +12,7 @@ solana-sdk = { workspace = true }
 sp1-sdk = { workspace = true }
 svm-runner = { workspace = true }
 svm-runner-types = { workspace = true }
+svm-runner-types-anchor = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 
 [build-dependencies]

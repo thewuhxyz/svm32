@@ -11,6 +11,7 @@ solana-sdk = { workspace = true }
 sp1-sdk = { workspace = true }
 svm-runner = { workspace = true }
 svm-runner-types = { workspace = true }
+svm-runner-types-anchor = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 anyhow = "1"
 borsh = {version = "1.5"}

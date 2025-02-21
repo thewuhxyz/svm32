@@ -1,14 +1,9 @@
 use anchor_lang::prelude::*;
-// use svm_runner_types::CommittedValues;
-use bincode::config::Options;
-use svm_runner_types_anchor::CommittedValues;
 use verifier::verify_proof;
-// use anchor_spl::associated_token::AssociatedToken;
-// use anchor_spl::token::*;
-
 use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::*;
+use crate::utils::{BorshCommitedValues, SP1Groth16Proof};
 
 /// Derived as follows:
 ///
@@ -20,15 +15,17 @@ use crate::state::*;
 const ZK_BRIDGE_VKEY_HASH: &str =
     "0x00b5f4f8596951753342637e0ab298e2072459a9aa8ad51116290b32d9206a55";
 
-#[derive(AnchorDeserialize, AnchorSerialize)]
-pub struct SP1Groth16Proof {
-    pub proof: Vec<u8>,
-    pub sp1_public_inputs: Vec<u8>,
-}
+// #[derive(AnchorDeserialize, AnchorSerialize)]
+// pub struct SP1Groth16Proof {
+//     pub proof: Vec<u8>,
+//     pub sp1_public_inputs: Vec<u8>,
+// }
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
 pub struct ProofArgs {
     pub proof: Vec<u8>,
+    pub public_input: Vec<u8>,
+    // pub public_input: BorshCommitedValues,
 }
 
 #[derive(Accounts)]
@@ -56,16 +53,23 @@ impl Prove<'_> {
 
         // Taking data from an account because it's too big to fit in an instruction.
 
+        msg!("Out of memory?");
+
         // let groth16_proof = SP1Groth16Proof::try_from_slice(&ctx.accounts.proof.data)
-        let groth16_proof = Box::new(
-            SP1Groth16Proof::try_from_slice(&proof.proof)
-                .map_err(|_| PlatformError::InvalidProofData)?,
-        );
+        // let groth16_proof = SP1Groth16Proof::try_from_slice(&proof.proof)?;
+
+        msg!("Out of memory?");
 
         // let vk = verifier::GROTH16_VK_4_0_0_RC3_BYTES;
+        // let _proof = groth16_proof.proof;
+        let _proof = &proof.proof;
+        // let public_input = groth16_proof.sp1_public_inputs.clone();
+        // let _public_input = groth16_proof.sp1_public_inputs;
+        let _public_input = &proof.public_input;
         verify_proof(
-            &groth16_proof.proof,
-            &groth16_proof.sp1_public_inputs,
+            _proof,
+            // &_public_input.clone(),
+            _public_input,
             ZK_BRIDGE_VKEY_HASH,
             verifier::GROTH16_VK_4_0_0_RC3_BYTES,
         )
@@ -73,14 +77,11 @@ impl Prove<'_> {
 
         msg!("Out of memory?");
 
-        let values: CommittedValues = bincode::options()
-            .with_limit(1000)
-            .with_fixint_encoding() // As per https://github.com/servo/bincode/issues/333, these two options are needed
-            .allow_trailing_bytes() // to retain the behavior of bincode::deserialize with the new `options()` method
-            .deserialize_from(groth16_proof.sp1_public_inputs.as_slice())
-            .map_err(|_| PlatformError::DeserializationError)?;
+        // msg!("public input len: {:#?}", &proof.public_input.len());
 
-        // let values = solana_bincode::limited_deserialize::<CommittedValues>(groth16_proof.sp1_public_inputs.as_slice(), 1000).unwrap();
+        // let values = groth16_proof.sp1_public_inputs;
+        let values = BorshCommitedValues::try_from_slice(&proof.public_input)?;
+        // let values = _public_input;
 
         msg!("Not out of memory!");
 
@@ -104,7 +105,7 @@ impl Prove<'_> {
         }
 
         // Update the platform state
-        ctx.accounts.platform.last_state_hash = values.1.to_bytes();
+        ctx.accounts.platform.last_state_hash = values.1;
 
         Ok(())
     }

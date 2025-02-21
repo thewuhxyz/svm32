@@ -1,7 +1,10 @@
 //! SVM runner executing transactions on the given accounts
 //!
-use svm_runner_types::{ExecutionInput, RollupState};
-use solana_sdk::account::{ReadableAccount, WritableAccount};
+use solana_account::Account;
+// use svm_runner_types::{ExecutionInput, RollupState};
+use svm_runner_types_anchor::{BorshExecutionInput, BorshRollupState};
+use solana_sdk::{account::{ReadableAccount, WritableAccount}, transaction::Transaction};
+// use solana_account::Account;
 use solana_svm::transaction_processor::ExecutionRecordingConfig;
 mod data;
 mod mock_bank;
@@ -26,11 +29,12 @@ const EXECUTION_SLOT: u64 = 5; // The execution slot must be greater than the de
 const EXECUTION_EPOCH: u64 = 2; // The execution epoch must be greater than the deployment epoch
 const LAMPORTS_PER_SIGNATURE: u64 = 20;
 
-pub fn runner(input: ExecutionInput) -> RollupState {
+pub fn runner(input: BorshExecutionInput) -> BorshRollupState {
     let mock_bank = MockBankCallback::default();
-
     // Insert accounts in the bank
     for (pk, account) in &input.accounts.0 {
+        // let _account = Account::from(account);
+        // let _account: Account = account.into();
         mock_bank
             .account_shared_data
             .write()
@@ -54,7 +58,10 @@ pub fn runner(input: ExecutionInput) -> RollupState {
     let mut txs = vec![];
     let mut txscheck = vec![];
 
-    for tx in input.txs {
+    let transactions = bincode::deserialize::<Vec<Transaction>>(&input.txs).unwrap();
+
+    // for tx in input.txs {
+    for tx in transactions {
         let sanitized_transaction = SanitizedTransaction::from_transaction_for_tests(tx);
         let transaction_check = Ok(CheckedTransactionDetails {
             nonce: None,
@@ -100,22 +107,24 @@ pub fn runner(input: ExecutionInput) -> RollupState {
 
     println!("Batch Result {:#?}", result.processing_results);
 
-    RollupState(
+    // RollupState(
+    BorshRollupState(
         input
             .accounts
             .0
             .iter()
             .map(|(pk, _account)| {
-                (
-                    *pk,
-                    mock_bank
+                let account: Account = mock_bank
                         .account_shared_data
                         .read()
                         .unwrap()
                         .get(pk)
                         .unwrap()
                         .clone()
-                        .into(),
+                        .into();
+                (
+                    *pk,
+                    account.into(),
                 )
             })
             .collect(),
