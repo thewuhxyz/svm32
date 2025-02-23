@@ -257,7 +257,7 @@ pub fn morph_into_deployment_environment_v1(
         }
     }
 
-    Ok(BuiltinProgram::new_loader(config.clone(), result))
+    Ok(BuiltinProgram::new_loader(config.to_owned(), result))
 }
 
 pub fn create_program_runtime_environment_v1<'a>(

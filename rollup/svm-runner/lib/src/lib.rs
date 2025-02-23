@@ -1,10 +1,11 @@
 //! SVM runner executing transactions on the given accounts
 //!
-use solana_account::Account;
-// use svm_runner_types::{ExecutionInput, RollupState};
-use svm_runner_types_anchor::{BorshExecutionInput, BorshRollupState};
-use solana_sdk::{account::{ReadableAccount, WritableAccount}, transaction::Transaction};
 // use solana_account::Account;
+use solana_sdk::{
+    account::{ReadableAccount, WritableAccount, Account},
+    transaction::Transaction,
+};
+use svm_runner_types::{ExecutionInput, RollupState, State};
 use solana_svm::transaction_processor::ExecutionRecordingConfig;
 mod data;
 mod mock_bank;
@@ -29,17 +30,17 @@ const EXECUTION_SLOT: u64 = 5; // The execution slot must be greater than the de
 const EXECUTION_EPOCH: u64 = 2; // The execution epoch must be greater than the deployment epoch
 const LAMPORTS_PER_SIGNATURE: u64 = 20;
 
-pub fn runner(input: BorshExecutionInput) -> BorshRollupState {
+pub fn runner(input: ExecutionInput) -> RollupState {
     let mock_bank = MockBankCallback::default();
     // Insert accounts in the bank
-    for (pk, account) in &input.accounts.0 {
-        // let _account = Account::from(account);
-        // let _account: Account = account.into();
+    // for (pk, account) in &input.accounts.0 {
+    for state in &input.accounts.states {
         mock_bank
             .account_shared_data
             .write()
             .unwrap()
-            .insert(*pk, account.clone().into());
+            .insert(state.pubkey, state.account.clone().into());
+        // .insert(*pk, account.clone().into());
     }
 
     // Process ramp txs
@@ -107,26 +108,47 @@ pub fn runner(input: BorshExecutionInput) -> BorshRollupState {
 
     println!("Batch Result {:#?}", result.processing_results);
 
-    // RollupState(
-    BorshRollupState(
-        input
+    RollupState{
+        states: input
             .accounts
-            .0
+            .states
             .iter()
-            .map(|(pk, _account)| {
+            .map(|state| {
                 let account: Account = mock_bank
-                        .account_shared_data
-                        .read()
-                        .unwrap()
-                        .get(pk)
-                        .unwrap()
-                        .clone()
-                        .into();
-                (
-                    *pk,
-                    account.into(),
-                )
+                    .account_shared_data
+                    .read()
+                    .unwrap()
+                    .get(&state.pubkey)
+                    .unwrap()
+                    .clone()
+                    .into();
+                State {
+                    pubkey: state.pubkey,
+                    account: account.into(),
+                }
             })
             .collect(),
-    )
+    }
+
+    // BorshRollupState(
+    //     input
+    //         .accounts
+    //         .0
+    //         .iter()
+    //         .map(|(pk, _account)| {
+    //             let account: Account = mock_bank
+    //                     .account_shared_data
+    //                     .read()
+    //                     .unwrap()
+    //                     .get(pk)
+    //                     .unwrap()
+    //                     .clone()
+    //                     .into();
+    //             (
+    //                 *pk,
+    //                 account.into(),
+    //             )
+    //         })
+    //         .collect(),
+    // )
 }

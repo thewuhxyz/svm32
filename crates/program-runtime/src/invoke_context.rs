@@ -88,6 +88,7 @@ macro_rules! declare_process_instruction {
     };
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> ContextObject for InvokeContext<'a> {
     fn trace(&mut self, state: [u64; 12]) {
         self.syscall_context

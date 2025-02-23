@@ -1,15 +1,14 @@
 use borsh::BorshDeserialize;
 use clap::Parser;
-// use serde::Serialize;
 use solana_sdk::{
     hash::Hash, native_token::LAMPORTS_PER_SOL, signature::Keypair, signer::Signer,
     system_instruction, system_program, transaction::Transaction,
 };
 use sp1_sdk::{include_elf, HashableKey, ProverClient, SP1Stdin};
-use std::vec;
-// use svm_runner_types::{hash_state, CommittedValues, ExecutionInput, RampTx, RollupState};
-use svm_runner_types_anchor::{
-    hash_state, BorshAccount, BorshCommitedValues, BorshExecutionInput, BorshRollupState, RampTx,
+use std::{fs::File, vec};
+use svm_runner_types::{
+    hash_state, CommitedValues, ExecutionInput, RampTx, RollupState, SP1Groth16Proof,
+    SerializableAccount, State,
 };
 
 const ELF: &[u8] = include_elf!("zk-svm");
@@ -27,12 +26,11 @@ struct Args {
     input: Option<Vec<u8>>,
 
     // #[clap(long, short, default_value = "./proof.bin")]
-    #[clap(long, short, default_value = "./proof_borsh_input.bin")]
+    #[clap(long, short, default_value = "./proof_borsh.bin")]
     output_path: String,
 }
 
-// fn create_test_input() -> ExecutionInput {
-fn create_test_input() -> BorshExecutionInput {
+fn create_test_input() -> ExecutionInput {
     let kp_sender_bytes: Vec<u8> =
         serde_json::from_slice(include_bytes!("../../../onchain/keypairSender.json")).unwrap();
     let kp_sender = Keypair::from_bytes(&kp_sender_bytes).unwrap();
@@ -55,44 +53,31 @@ fn create_test_input() -> BorshExecutionInput {
 
     let serialized_transactions = bincode::serialize(&transactions).unwrap();
 
-    // ExecutionInput {
-    BorshExecutionInput {
-        // accounts: RollupState(vec![
-        accounts: BorshRollupState(vec![
-            (
-                kp_sender.try_pubkey().unwrap(),
-                // Account {
-                BorshAccount {
-                    lamports: 10 * LAMPORTS_PER_SOL,
-                    // lamports: 10 * LAMPORTS_PER_SOL,
-                    data: vec![],
-                    owner: system_program::id(),
-                    executable: false,
-                    rent_epoch: 0,
+    ExecutionInput {
+        accounts: RollupState {
+            states: vec![
+                State {
+                    pubkey: kp_sender.try_pubkey().unwrap(),
+                    account: SerializableAccount {
+                        lamports: 10 * LAMPORTS_PER_SOL,
+                        data: vec![],
+                        owner: system_program::id(),
+                        executable: false,
+                        rent_epoch: 0,
+                    },
                 },
-            ),
-            (
-                pk_receiver,
-                // Account {
-                BorshAccount {
-                    lamports: 0,
-                    data: vec![],
-                    owner: system_program::id(),
-                    executable: false,
-                    rent_epoch: 0,
+                State {
+                    pubkey: pk_receiver,
+                    account: SerializableAccount {
+                        lamports: 0,
+                        data: vec![],
+                        owner: system_program::id(),
+                        executable: false,
+                        rent_epoch: 0,
+                    },
                 },
-            ),
-        ]),
-        // txs: vec![Transaction::new_signed_with_payer(
-        //     &[system_instruction::transfer(
-        //         &kp_sender.try_pubkey().unwrap(),
-        //         &pk_receiver,
-        //         10 * LAMPORTS_PER_SOL,
-        //     )],
-        //     Some(&kp_sender.try_pubkey().unwrap()),
-        //     &[&kp_sender],
-        //     Hash::new_from_array([7; 32]),
-        // )],
+            ],
+        },
         txs: serialized_transactions,
         ramp_txs: vec![RampTx {
             is_onramp: true,
@@ -118,11 +103,12 @@ fn main() {
     };
 
     let bytes = borsh::to_vec(&input).unwrap();
-    // let bytes = bincode::serialize(&input).unwrap();
+
+    // std::env::set_var("SP1_PROVER", "cpu");
 
     let client = ProverClient::from_env();
     let mut stdin = SP1Stdin::new();
-    
+
     stdin.write_slice(&bytes);
 
     if args.execute {
@@ -130,30 +116,11 @@ fn main() {
         let (output, report) = client.execute(ELF, &stdin).run().unwrap();
         println!("Program executed successfully.");
 
-        // Read the output.
-        // let decoded = PublicValuesStruct::abi_decode(output.as_slice(), true).unwrap();
-        // let PublicValuesStruct { n, a, b } = decoded;
-        // println!("n: {}", n);
-        // println!("a: {}", a);
-        
-        // println!("output buffer: {}", output.raw());
-        // let sa: BorshExecutionInput = bincode::deserialize::<BorshExecutionInput>(&bytes).unwrap();
-        // println!("byes buffer: {:#?}", sa);
-        
-        // Record the number of cycles executed.
-        println!("Number of cycles: {}", report.total_instruction_count());
-        
-        // let so = output.read::<BorshExecutionInput>();
-        // println!("output buffer: {:#?}", so);
-        
-        // let commited_values = bincode::deserialize::<BorshCommitedValues>(&output.to_vec()).unwrap();
-        let commited_values = BorshCommitedValues::try_from_slice(&output.to_vec()).unwrap();
+        let commited_values = CommitedValues::try_from_slice(&output.to_vec()).unwrap();
         println!("committed values: {:#?}", &commited_values);
 
-        // let output = BorshExecutionInput::try_from_slice(&output.to_vec()).unwrap();
-        // println!("output buffer: {:#?}", output);
-        // println!("output buffer: {}", output.raw());
-
+        // Record the number of cycles executed.
+        println!("Number of cycles: {}", report.total_instruction_count());
     } else {
         println!("Initial state hash: {}", hash_state(input.accounts));
 
@@ -169,13 +136,24 @@ fn main() {
             .expect("failed to generate proof");
         proof.save(args.output_path).expect("failed to save proof");
 
-        // let output: BorshCommitedValues = proof.public_values.read();
-        // let output = bincode::deserialize::<BorshCommitedValues>(&proof.public_values.to_vec()).unwrap();
-        
-        let output = BorshCommitedValues::try_from_slice(&proof.public_values.to_vec()).unwrap();
-        println!("Final state hash: {:?}", output.1);
+        let output = CommitedValues::try_from_slice(&proof.public_values.to_vec()).unwrap();
+        println!("Final state hash: {:?}", output.output);
 
         println!("Successfully generated proof!");
+
+        let grooth16_proof = SP1Groth16Proof {
+            proof: proof.bytes(),
+            sp1_public_inputs: output,
+        };
+
+        println!("Writing borsh serializable grooth16 proof to file...");
+
+        let mut proof_borsh_file = File::create("grooth16_proof.bin").expect("failed to open file");
+
+        borsh::to_writer(&mut proof_borsh_file, &grooth16_proof)
+            .expect("borsh unable to write to file");
+
+        println!("Successfully written to file!");
 
         // Verify the proof.
         client.verify(&proof, &vk).expect("failed to verify proof");

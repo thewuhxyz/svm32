@@ -5,30 +5,21 @@ import kpSender from "../keypairSender.json";
 import kpReceiver from "../keypairReceiver.json";
 import { assert } from "chai";
 import fs from "fs";
+import { proofSchema, Proof, ProofSchema } from "./utils";
 import * as borsh from "borsh";
 
-const initialStateHash = "EukGGeg2sN2tETkZQP4kPTQxJQU859P8j5JGNLBKSt87";
+// const initialStateHash = "EukGGeg2sN2tETkZQP4kPTQxJQU859P8j5JGNLBKSt87";
+const initialStateHash = "Aq2kL5qUSQTAPxXyMTWWm618UvyQy3axDweYzEHM9bHa";
+
 const senderKeypair = anchor.web3.Keypair.fromSecretKey(
 	Uint8Array.from(Buffer.from(kpSender))
 );
 const receiverKeypair = anchor.web3.Keypair.fromSecretKey(
 	Uint8Array.from(Buffer.from(kpReceiver))
 );
-const proof = new Uint8Array(fs.readFileSync("../zk/borsh/proof_borsh.bin"));
-// const proof = new Uint8Array(fs.readFileSync("../zk/borsh/proof_borsh_for_program.bin"));
-
-export type Proof = {
-	proof: Uint8Array;
-	publicInput: Uint8Array;
-};
-
-// Define the schema for the proof data
-export const proofSchema: borsh.Schema = {
-	struct: {
-		proof: { array: { type: "u8" } },
-		publicInput: { array: { type: "u8" } },
-	},
-};
+const proof = new Uint8Array(
+	fs.readFileSync("../zk/script/grooth16_proof.bin")
+);
 
 describe("zk-bridge", () => {
 	// Configure the client to use the local cluster.
@@ -143,19 +134,20 @@ describe("zk-bridge", () => {
 
 		console.log("upload proof");
 
+		// let _proof = borsh.deserialize(proofSchema, proof) as ProofSchema;
 		let _proof = borsh.deserialize(proofSchema, proof) as Proof;
-
-		console.log("proof len:", proof.length);
-
-    console.log("_proof:", _proof.proof)
-    console.log("_proof len:", _proof.proof.length)
-    console.log("_public_input:", _proof.publicInput)
-    console.log("_public_input len:", _proof.publicInput.length)
 
 		await program.methods
 			.prove({
 				proof: Buffer.from(_proof.proof),
-				publicInput: Buffer.from(_proof.publicInput),
+				sp1PublicInputs: {
+					input: {
+						rampTxs: _proof.publicInput.input.rampTxs,
+						rollupAccounts: _proof.publicInput.input.rollupAccounts,
+						txs: Buffer.from(_proof.publicInput.input.txs),
+					},
+					output: _proof.publicInput.output,
+				},
 			})
 			.accountsPartial({
 				prover: senderKeypair.publicKey,

@@ -252,6 +252,7 @@ pub(crate) fn load_public_inputs_from_bytes(buffer: &[u8]) -> Result<PublicInput
 }
 
 /// Hashes the public inputs in the same format as the Groth16 verifier.
+#[allow(clippy::assign_op_pattern)]
 pub fn hash_public_inputs(public_inputs: &[u8]) -> [u8; 32] {
     let mut result = Sha256::digest(public_inputs);
 

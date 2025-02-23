@@ -1,7 +1,8 @@
 use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::ramp::Ramp;
-use crate::state::{RampTx, PLATFORM_SEED_PREFIX, RAMP_SEED_PREFIX};
+use crate::state::{PLATFORM_SEED_PREFIX, RAMP_SEED_PREFIX};
+use crate::utils::RampTx;
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
 

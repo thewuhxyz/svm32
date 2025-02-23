@@ -194,6 +194,7 @@ pub fn validate_fee_payer(
 /// batch. Each tuple contains struct of information about accounts as
 /// its first element and an optional transaction nonce info as its
 /// second element.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn load_accounts<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     txs: &[impl SVMMessage],
@@ -221,6 +222,7 @@ pub(crate) fn load_accounts<CB: TransactionProcessingCallback>(
         .collect()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn load_transaction<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     message: &impl SVMMessage,
@@ -276,6 +278,7 @@ struct LoadedTransactionAccounts {
     pub loaded_accounts_data_size: u32,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn load_transaction_accounts<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     message: &impl SVMMessage,
@@ -414,6 +417,7 @@ fn load_transaction_accounts<CB: TransactionProcessingCallback>(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn load_transaction_account<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     message: &impl SVMMessage,

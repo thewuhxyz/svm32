@@ -71,6 +71,7 @@ pub fn advance_nonce_account(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn withdraw_nonce_account(
     from_account_index: IndexOfAccount,
     lamports: u64,

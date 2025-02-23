@@ -7,8 +7,6 @@ pub mod utils;
 
 use crate::instructions::*;
 
-// use crate::state::*;
-
 declare_id!("CfV42peE578MVCEFiycmeUQNCzfzmMcUcRq4ngrXkayn");
 
 #[program]
@@ -35,7 +33,7 @@ pub mod zk_bridge {
         UploadProof::handle(ctx, args)
     }
 
-    pub fn prove(ctx: Context<Prove>, proof: ProofArgs) -> Result<()> {
+    pub fn prove(ctx: Context<Prove>, proof: utils::SP1Groth16Proof) -> Result<()> {
         Prove::handle(ctx, proof)
     }
 }

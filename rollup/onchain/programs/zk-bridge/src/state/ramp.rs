@@ -12,15 +12,3 @@ pub struct Ramp {
     pub current_state_hash: [u8; 32],
     pub pending_withdraw: u64,
 }
-
-// #[macro_export]
-// macro_rules! generate_network_seeds {
-//     ($network:expr) => {{
-//         &[
-//             PLATFORM_SEED_PREFIX,
-//             $network.base_mint.as_ref(),
-//             &[$amm.bump],
-//         ]
-//     }};
-// }
-

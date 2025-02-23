@@ -708,6 +708,7 @@ pub struct BorrowedAccount<'a> {
     account: RefMut<'a, AccountSharedData>,
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> BorrowedAccount<'a> {
     /// Returns the transaction context
     pub fn transaction_context(&self) -> &TransactionContext {

@@ -1,33 +1,41 @@
 use anchor_lang::prelude::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Debug)]
+#[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone, InitSpace)]
 pub struct RampTx {
-  pub is_onramp: bool,
-  pub user: Pubkey,
-  pub amount: u64,
+    pub is_onramp: bool,
+    pub user: Pubkey,
+    pub amount: u64,
 }
 
 pub type ExecutionOutput = [u8; 32];
 
-/// Borsh Serializable [CommitedValues]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug)]
-pub struct BorshCommitedValues(pub BorshExecutionInput, pub ExecutionOutput);
+pub struct CommitedValues {
+    pub input: ExecutionInput,
+    pub output: ExecutionOutput,
+}
 
-/// Borsh Serializable [ExecutionInput]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug)]
-pub struct BorshExecutionInput {
-    pub rollup_accounts: BorshRollupState,
+pub struct ExecutionInput {
+    pub rollup_accounts: RollupState, // use Vec<State> instead
     pub txs: Vec<u8>, // Vec of serialized transactions: Vec<Transaction>
     pub ramp_txs: Vec<RampTx>,
 }
 
-/// Borsh Serializable [RollupState]
 #[derive(AnchorSerialize, AnchorDeserialize, Debug)]
-pub struct BorshRollupState(pub Vec<(Pubkey, BorshAccount)>);
+pub struct RollupState {
+    pub states: Vec<State>,
+}
 
-/// Borsh Serializable Solana
+#[derive(AnchorDeserialize, AnchorSerialize, Debug)]
+pub struct State {
+    pub pubkey: Pubkey,
+    pub account: SerializableAccount,
+}
+
+/// Borsh Serializable Solana Account
 #[derive(AnchorSerialize, AnchorDeserialize, Debug)]
-pub struct BorshAccount {
+pub struct SerializableAccount {
     /// lamports in the account
     pub lamports: u64,
     /// data held in this account
@@ -40,9 +48,8 @@ pub struct BorshAccount {
     pub rent_epoch: u64,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize)]
+#[derive(AnchorSerialize, AnchorDeserialize, Debug)]
 pub struct SP1Groth16Proof {
     pub proof: Vec<u8>,
-    pub sp1_public_inputs: Vec<u8>,
-    // pub sp1_public_inputs: BorshCommitedValues,
+    pub sp1_public_inputs: CommitedValues,
 }

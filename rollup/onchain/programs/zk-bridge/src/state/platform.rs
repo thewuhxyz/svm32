@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-// use runner_types_core::RampTx;
+use crate::utils::RampTx;
 
 pub const PLATFORM_SEED_PREFIX: &[u8] = b"platform:";
 
@@ -15,13 +15,6 @@ pub struct Platform {
     pub ramp_txs: Vec<RampTx>,
     pub deposit: u64,
     pub withdraw: u64,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct RampTx {
-    pub is_onramp: bool,
-    pub user: Pubkey,
-    pub amount: u64,
 }
 
 #[macro_export]

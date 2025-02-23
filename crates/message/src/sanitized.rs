@@ -36,6 +36,7 @@ pub struct LegacyMessage<'a> {
     pub is_writable_account_cache: Vec<bool>,
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> LegacyMessage<'a> {
     pub fn new(message: legacy::Message, reserved_account_keys: &HashSet<Pubkey>) -> Self {
         let is_writable_account_cache = message

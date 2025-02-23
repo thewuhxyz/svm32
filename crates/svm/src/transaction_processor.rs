@@ -405,6 +405,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn validate_fees<CB: TransactionProcessingCallback, T: SVMMessage>(
         &self,
         callbacks: &CB,
@@ -442,6 +443,7 @@ impl<FG: ForkGraph> TransactionBatchProcessor<FG> {
     // Loads transaction fee payer, collects rent if necessary, then calculates
     // transaction fees, and deducts them from the fee payer balance. If the
     // account is not found or has insufficient funds, an error is returned.
+    #[allow(clippy::too_many_arguments)]
     fn validate_transaction_fee_payer<CB: TransactionProcessingCallback>(
         &self,
         callbacks: &CB,

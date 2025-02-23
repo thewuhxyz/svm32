@@ -216,6 +216,7 @@ impl<'de> serde::Deserialize<'de> for MessagePrefix {
     {
         struct PrefixVisitor;
 
+        #[allow(clippy::needless_lifetimes)]
         impl<'de> Visitor<'de> for PrefixVisitor {
             type Value = MessagePrefix;
 

@@ -242,6 +242,7 @@ fn transfer(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn transfer_with_seed(
     from_account_index: IndexOfAccount,
     from_base_account_index: IndexOfAccount,

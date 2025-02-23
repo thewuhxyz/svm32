@@ -20,4 +20,4 @@ solana-system-program = { workspace = true }
 solana-type-overrides = { workspace = true }
 svm-runner = { workspace = true }
 svm-runner-types = { workspace = true }
-svm-runner-types-anchor = { workspace = true }
+# svm-runner-types-anchor = { workspace = true }

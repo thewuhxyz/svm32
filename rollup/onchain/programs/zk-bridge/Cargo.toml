@@ -25,7 +25,12 @@ anchor-lang = { workspace = true, features = ["init-if-needed"] }
 anchor-spl = { workspace = true }
 bincode = { workspace = true }
 borsh = { workspace = true }
-solana-bincode = {version = "=2.1.13"}
 verifier = { workspace = true }
-# svm-runner-types = { workspace = true }
-svm-runner-types-anchor = { path = "../../../svm-runner/types-anchor" }
+svm-runner-types = { path = "../../../svm-runner/types" }
+
+[dev-dependencies]
+anchor-client = {workspace = true}
+anyhow = { version = "1" }
+litesvm = "0.5"
+tokio = {version = "1", features = ["full"]}
+zk-bridge = {path = "."}

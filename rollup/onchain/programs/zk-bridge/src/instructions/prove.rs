@@ -1,9 +1,9 @@
-use anchor_lang::prelude::*;
-use verifier::verify_proof;
 use crate::errors::PlatformError;
 use crate::state::platform::Platform;
 use crate::state::*;
-use crate::utils::{BorshCommitedValues, SP1Groth16Proof};
+use crate::utils::SP1Groth16Proof;
+use anchor_lang::prelude::*;
+use verifier::verify_proof;
 
 /// Derived as follows:
 ///
@@ -13,20 +13,9 @@ use crate::utils::{BorshCommitedValues, SP1Groth16Proof};
 /// let vkey_hash = vk.bytes32();
 /// ```
 const ZK_BRIDGE_VKEY_HASH: &str =
-    "0x00b5f4f8596951753342637e0ab298e2072459a9aa8ad51116290b32d9206a55";
-
-// #[derive(AnchorDeserialize, AnchorSerialize)]
-// pub struct SP1Groth16Proof {
-//     pub proof: Vec<u8>,
-//     pub sp1_public_inputs: Vec<u8>,
-// }
-
-#[derive(AnchorDeserialize, AnchorSerialize)]
-pub struct ProofArgs {
-    pub proof: Vec<u8>,
-    pub public_input: Vec<u8>,
-    // pub public_input: BorshCommitedValues,
-}
+    "0x0064e652e64b5b61fc6090d231016260c1ff2ba3746bd7661356a0d780fa0162";
+// "0x0039a2ea684d5ebf650341d23f14c448a552e72793827ffe9c54aca424224761";
+// "0x00b5f4f8596951753342637e0ab298e2072459a9aa8ad51116290b32d9206a55";
 
 #[derive(Accounts)]
 pub struct Prove<'info> {
@@ -48,46 +37,26 @@ pub struct Prove<'info> {
 }
 
 impl Prove<'_> {
-    pub fn handle(ctx: Context<Self>, proof: ProofArgs) -> Result<()> {
-        // unimplemented!();
-
-        // Taking data from an account because it's too big to fit in an instruction.
-
+    pub fn handle(ctx: Context<Self>, proof: SP1Groth16Proof) -> Result<()> {
+        // Taking data from an account because it's too big to fit in an instruction
         msg!("Out of memory?");
 
-        // let groth16_proof = SP1Groth16Proof::try_from_slice(&ctx.accounts.proof.data)
-        // let groth16_proof = SP1Groth16Proof::try_from_slice(&proof.proof)?;
-
-        msg!("Out of memory?");
-
-        // let vk = verifier::GROTH16_VK_4_0_0_RC3_BYTES;
-        // let _proof = groth16_proof.proof;
         let _proof = &proof.proof;
-        // let public_input = groth16_proof.sp1_public_inputs.clone();
-        // let _public_input = groth16_proof.sp1_public_inputs;
-        let _public_input = &proof.public_input;
+        let values = &proof.sp1_public_inputs;
+        
         verify_proof(
             _proof,
-            // &_public_input.clone(),
-            _public_input,
+            &values.try_to_vec()?,
             ZK_BRIDGE_VKEY_HASH,
             verifier::GROTH16_VK_4_0_0_RC3_BYTES,
         )
         .map_err(|_| PlatformError::InvalidProof)?;
 
-        msg!("Out of memory?");
-
-        // msg!("public input len: {:#?}", &proof.public_input.len());
-
-        // let values = groth16_proof.sp1_public_inputs;
-        let values = BorshCommitedValues::try_from_slice(&proof.public_input)?;
-        // let values = _public_input;
-
         msg!("Not out of memory!");
 
         // Check that ramps txs match the ones in the platform
         // Currently only check the count, could be improved to a hash of all txs
-        if values.0.ramp_txs.len() != ctx.accounts.platform.ramp_txs.len() {
+        if values.input.ramp_txs.len() != ctx.accounts.platform.ramp_txs.len() {
             return Err(PlatformError::MissingRampTxs.into());
         }
 
@@ -96,7 +65,7 @@ impl Prove<'_> {
 
         // This can currently brick the platform, there should be a limit in number of ramp txs
         for ramp_tx in values
-            .0
+            .input
             .ramp_txs
             .iter()
             .filter(|ramp_tx| !ramp_tx.is_onramp)
@@ -105,7 +74,7 @@ impl Prove<'_> {
         }
 
         // Update the platform state
-        ctx.accounts.platform.last_state_hash = values.1;
+        ctx.accounts.platform.last_state_hash = values.output;
 
         Ok(())
     }
