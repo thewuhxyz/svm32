@@ -452,6 +452,7 @@ fn check_slots_are_valid(
     while i < vote_slots.len() && j > 0 {
         // 1) increment `i` to find the smallest slot `s` in `vote_slots`
         // where `s` >= `last_voted_slot`
+        #[allow(clippy::unnecessary_map_or)]
         if vote_state
             .last_voted_slot()
             .map_or(false, |last_voted_slot| vote_slots[i] <= last_voted_slot)
@@ -620,6 +621,7 @@ pub fn process_new_vote_state(
     // Accumulate credits earned by newly rooted slots.  The behavior changes with timely_vote_credits: prior to
     // this feature, there was a bug that counted a new root slot as 1 credit even if it had never been voted on.
     // timely_vote_credits fixes this bug by only awarding credits for slots actually voted on and finalized.
+    #[allow(clippy::unnecessary_map_or)]
     let timely_vote_credits = feature_set.map_or(false, |f| {
         f.is_active(&feature_set::timely_vote_credits::id())
     });
@@ -966,6 +968,7 @@ fn verify_authorized_signer<S: std::hash::BuildHasher>(
 }
 
 /// Withdraw funds from the vote account
+#[allow(clippy::too_many_arguments)]
 pub fn withdraw<S: std::hash::BuildHasher>(
     transaction_context: &TransactionContext,
     instruction_context: &InstructionContext,

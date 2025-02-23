@@ -41,7 +41,6 @@ pub mod remove_accounts_executable_flag_checks {
     solana_pubkey::declare_id!("FfgtauHUWKeXTzjXkua9Px4tNGBFHKZ9WaigM5VbbzFx");
 }
 
-
 // for the load instructions
 pub(crate) type TransactionRent = u64;
 pub(crate) type TransactionProgramIndices = Vec<Vec<IndexOfAccount>>;
@@ -195,6 +194,7 @@ pub fn validate_fee_payer(
 /// batch. Each tuple contains struct of information about accounts as
 /// its first element and an optional transaction nonce info as its
 /// second element.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn load_accounts<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     txs: &[impl SVMMessage],
@@ -222,6 +222,7 @@ pub(crate) fn load_accounts<CB: TransactionProcessingCallback>(
         .collect()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn load_transaction<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     message: &impl SVMMessage,
@@ -277,6 +278,7 @@ struct LoadedTransactionAccounts {
     pub loaded_accounts_data_size: u32,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn load_transaction_accounts<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     message: &impl SVMMessage,
@@ -384,8 +386,7 @@ fn load_transaction_accounts<CB: TransactionProcessingCallback>(
             {
                 if let Some(owner_account) = callbacks.get_account_shared_data(owner_id) {
                     if !native_loader::check_id(owner_account.owner())
-                        || (!feature_set
-                            .is_active(&remove_accounts_executable_flag_checks::id())
+                        || (!feature_set.is_active(&remove_accounts_executable_flag_checks::id())
                             && !owner_account.executable())
                     {
                         error_metrics.invalid_program_for_execution += 1;
@@ -416,6 +417,7 @@ fn load_transaction_accounts<CB: TransactionProcessingCallback>(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn load_transaction_account<CB: TransactionProcessingCallback>(
     callbacks: &CB,
     message: &impl SVMMessage,

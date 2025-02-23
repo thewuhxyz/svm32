@@ -1,0 +1,36 @@
+[package]
+name = "zk-bridge"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "zk_bridge"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+solana = []
+
+[dependencies]
+anchor-lang = { workspace = true, features = ["init-if-needed"] }
+anchor-spl = { workspace = true }
+bincode = { workspace = true }
+borsh = { workspace = true }
+verifier = { workspace = true }
+svm-runner-types = { path = "../../../svm-runner/types" }
+
+[dev-dependencies]
+anchor-client = {workspace = true}
+anyhow = { version = "1" }
+litesvm = "0.5"
+tokio = {version = "1", features = ["full"]}
+zk-bridge = {path = "."}

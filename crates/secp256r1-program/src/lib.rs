@@ -37,10 +37,11 @@ pub struct Secp256r1SignatureOffsets {
     pub message_instruction_index: u16,
 }
 
+#[allow(unexpected_cfgs)]
 #[cfg(all(not(target_arch = "wasm32"), not(target_os = "solana")))]
 mod target_arch {
     use {
-        crate::Secp256r1SignatureOffsets,
+        // crate::Secp256r1SignatureOffsets,
         bytemuck::bytes_of,
         // openssl::{
         //     bn::{BigNum, BigNumContext},
@@ -52,10 +53,12 @@ mod target_arch {
         // },
         p256::{
             ecdsa::{
-                signature::{Signer, Verifier},
-                Signature, SigningKey, VerifyingKey,
+                // signature::{Signer, Verifier},
+                // Signature,
+                SigningKey,
+                // VerifyingKey,
             },
-            elliptic_curve::rand_core::OsRng,
+            // elliptic_curve::rand_core::OsRng,
         },
 
         solana_feature_set::FeatureSet,
@@ -84,6 +87,7 @@ mod target_arch {
     ];
 
     // Computed half order
+    #[allow(dead_code)]
     const SECP256R1_HALF_ORDER: [u8; FIELD_SIZE] = [
         0x7F, 0xFF, 0xFF, 0xFF, 0x80, 0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0xDE, 0x73, 0x7D, 0x56, 0xD3, 0x8B, 0xCF, 0x42, 0x79, 0xDC, 0xE5, 0x61, 0x7E, 0x31,
@@ -94,7 +98,7 @@ mod target_arch {
 
     pub fn new_secp256r1_instruction(
         message: &[u8],
-        signing_key: &SigningKey,
+        _signing_key: &SigningKey,
         // signing_key: EcKey<Private>,
     ) -> Result<Instruction, Box<dyn std::error::Error>> {
         // let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
@@ -187,7 +191,7 @@ mod target_arch {
 
     pub fn verify(
         data: &[u8],
-        instruction_datas: &[&[u8]],
+        _instruction_datas: &[&[u8]],
         _feature_set: &FeatureSet,
     ) -> Result<(), PrecompileError> {
         if data.len() < SIGNATURE_OFFSETS_START {
@@ -308,6 +312,7 @@ mod target_arch {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn get_data_slice<'a>(
         data: &'a [u8],
         instruction_datas: &'a [&[u8]],

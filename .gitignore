@@ -1,2 +1,7 @@
-target
+target/
 .DS_Store
+node_modules
+.yarn
+.anchor
+test-ledger
+.env

@@ -286,6 +286,7 @@ fn memset_non_contiguous(
     Ok(0)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn iter_memory_pair_chunks<T, F>(
     src_access: AccessType,
     src_addr: u64,
@@ -478,6 +479,7 @@ impl<'a> Iterator for MemoryChunkIterator<'a> {
     }
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> DoubleEndedIterator for MemoryChunkIterator<'a> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.vm_addr_start == self.vm_addr_end {

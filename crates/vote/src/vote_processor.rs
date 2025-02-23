@@ -18,6 +18,7 @@ use {
     std::collections::HashSet,
 };
 
+#[allow(clippy::too_many_arguments)]
 fn process_authorize_with_seed_instruction(
     invoke_context: &InvokeContext,
     instruction_context: &InstructionContext,

@@ -50,6 +50,7 @@ enum VmValue<'a, 'b, T> {
     Translated(&'a mut T),
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a, 'b, T> VmValue<'a, 'b, T> {
     fn get(&self) -> Result<&T, Error> {
         match self {
@@ -836,6 +837,7 @@ where
 
 // Finish translating accounts, build CallerAccount values and update callee
 // accounts in preparation of executing the callee.
+#[allow(clippy::too_many_arguments)]
 fn translate_and_update_accounts<'a, 'b, T, F>(
     instruction_accounts: &[InstructionAccount],
     program_indices: &[IndexOfAccount],
