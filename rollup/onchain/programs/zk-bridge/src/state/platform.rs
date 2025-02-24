@@ -1,5 +1,5 @@
-use anchor_lang::prelude::*;
 use crate::utils::RampTx;
+use anchor_lang::prelude::*;
 
 pub const PLATFORM_SEED_PREFIX: &[u8] = b"platform:";
 
@@ -27,4 +27,3 @@ macro_rules! generate_network_seeds {
         ]
     }};
 }
-

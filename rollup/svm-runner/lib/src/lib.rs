@@ -2,11 +2,11 @@
 //!
 // use solana_account::Account;
 use solana_sdk::{
-    account::{ReadableAccount, WritableAccount, Account},
+    account::{Account, ReadableAccount, WritableAccount},
     transaction::Transaction,
 };
-use svm_runner_types::{ExecutionInput, RollupState, State};
 use solana_svm::transaction_processor::ExecutionRecordingConfig;
+use svm_runner_types::{ExecutionInput, RollupState, State};
 mod data;
 mod mock_bank;
 use {
@@ -108,7 +108,7 @@ pub fn runner(input: ExecutionInput) -> RollupState {
 
     println!("Batch Result {:#?}", result.processing_results);
 
-    RollupState{
+    RollupState {
         states: input
             .accounts
             .states

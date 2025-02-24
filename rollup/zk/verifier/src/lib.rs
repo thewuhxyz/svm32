@@ -5,7 +5,7 @@
 //! # Example
 //! ```no_run
 //! use sp1_sdk::proof::SP1ProofWithPublicValues;
-//! use sp1_solana::{verify_proof, GROTH16_VK_2_0_0_BYTES};
+//! use verifier::{verify_proof, GROTH16_VK_2_0_0_BYTES};
 //!
 //! // Load the sp1_proof_with_public_values from a file.
 //! let sp1_proof_with_public_values_file = "../proofs/fibonacci_proof.bin";
@@ -39,7 +39,11 @@ pub const GROTH16_VK_2_0_0_BYTES: &[u8] = include_bytes!("../vk/v2.0.0/groth16_v
 /// The public inputs are the vkey hash and the commited values digest, concatenated.
 /// The proof is a decompressed G1 element, followed by a decompressed G2 element, followed by a
 /// decompressed G1 element.
-pub fn verify_proof_raw(proof: &[u8], public_inputs: &[u8], vk: &[u8]) -> Result<(), VerifierError> {
+pub fn verify_proof_raw(
+    proof: &[u8],
+    public_inputs: &[u8],
+    vk: &[u8],
+) -> Result<(), VerifierError> {
     let proof = load_proof_from_bytes(proof)?;
     let vk = load_groth16_verifying_key_from_bytes(vk)?;
     let public_inputs = load_public_inputs_from_bytes(public_inputs)?;
@@ -62,7 +66,10 @@ pub fn verify_proof_raw(proof: &[u8], public_inputs: &[u8], vk: &[u8]) -> Result
     )
     .map_err(|_| VerifierError::VerificationError)?;
 
-    if verifier.verify().map_err(|_| VerifierError::VerificationError)? {
+    if verifier
+        .verify()
+        .map_err(|_| VerifierError::VerificationError)?
+    {
         println!("Verification successful.");
         Ok(())
     } else {

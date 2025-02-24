@@ -20,7 +20,7 @@ pub fn main() {
         input,
         output: hash,
     };
-    
+
     let output_slice = borsh::to_vec(&output).unwrap();
 
     sp1_zkvm::io::commit_slice(&output_slice);

@@ -25,8 +25,7 @@ struct Args {
     #[clap(long)]
     input: Option<Vec<u8>>,
 
-    // #[clap(long, short, default_value = "./proof.bin")]
-    #[clap(long, short, default_value = "./proof_borsh.bin")]
+    #[clap(long, short, default_value = "./proof.bin")]
     output_path: String,
 }
 
@@ -103,8 +102,6 @@ fn main() {
     };
 
     let bytes = borsh::to_vec(&input).unwrap();
-
-    // std::env::set_var("SP1_PROVER", "cpu");
 
     let client = ProverClient::from_env();
     let mut stdin = SP1Stdin::new();
