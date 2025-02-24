@@ -106,13 +106,15 @@ fn convert_endianness<const CHUNK_SIZE: usize, const ARRAY_SIZE: usize>(
 fn decompress_g1(g1_bytes: &[u8; 32]) -> Result<[u8; 64], VerifierError> {
     let g1_bytes = gnark_compressed_x_to_ark_compressed_x(g1_bytes)?;
     let g1_bytes = convert_endianness::<32, 32>(&g1_bytes.as_slice().try_into().unwrap());
-    groth16_solana::decompression::decompress_g1(&g1_bytes).map_err(|_| VerifierError::G1CompressionError)
+    groth16_solana::decompression::decompress_g1(&g1_bytes)
+        .map_err(|_| VerifierError::G1CompressionError)
 }
 
 fn decompress_g2(g2_bytes: &[u8; 64]) -> Result<[u8; 128], VerifierError> {
     let g2_bytes = gnark_compressed_x_to_ark_compressed_x(g2_bytes)?;
     let g2_bytes = convert_endianness::<64, 64>(&g2_bytes.as_slice().try_into().unwrap());
-    groth16_solana::decompression::decompress_g2(&g2_bytes).map_err(|_| VerifierError::G2CompressionError)
+    groth16_solana::decompression::decompress_g2(&g2_bytes)
+        .map_err(|_| VerifierError::G2CompressionError)
 }
 
 const GNARK_MASK: u8 = 0b11 << 6;
@@ -239,14 +241,20 @@ pub(crate) fn load_groth16_verifying_key_from_bytes(
     })
 }
 
-pub(crate) fn load_public_inputs_from_bytes(buffer: &[u8]) -> Result<PublicInputs<2>, VerifierError> {
+pub(crate) fn load_public_inputs_from_bytes(
+    buffer: &[u8],
+) -> Result<PublicInputs<2>, VerifierError> {
     let mut bytes = [0u8; 64];
     bytes[1..].copy_from_slice(buffer); // vkey_hash is 31 bytes
 
     Ok(PublicInputs::<2> {
         inputs: [
-            bytes[..32].try_into().map_err(|_| VerifierError::InvalidInput)?, // vkey_hash
-            bytes[32..].try_into().map_err(|_| VerifierError::InvalidInput)?, // committed_values_digest
+            bytes[..32]
+                .try_into()
+                .map_err(|_| VerifierError::InvalidInput)?, // vkey_hash
+            bytes[32..]
+                .try_into()
+                .map_err(|_| VerifierError::InvalidInput)?, // committed_values_digest
         ],
     })
 }
@@ -275,6 +283,9 @@ pub fn groth16_public_values(sp1_vkey_hash: &[u8; 32], sp1_public_inputs: &[u8])
 
 /// Decodes the sp1 vkey hash from the string from bytes32.
 pub fn decode_sp1_vkey_hash(sp1_vkey_hash: &str) -> Result<[u8; 32], VerifierError> {
-    let bytes = hex::decode(&sp1_vkey_hash[2..]).map_err(|_| VerifierError::InvalidProgramVkeyHash)?;
-    bytes.try_into().map_err(|_| VerifierError::InvalidProgramVkeyHash)
+    let bytes =
+        hex::decode(&sp1_vkey_hash[2..]).map_err(|_| VerifierError::InvalidProgramVkeyHash)?;
+    bytes
+        .try_into()
+        .map_err(|_| VerifierError::InvalidProgramVkeyHash)
 }

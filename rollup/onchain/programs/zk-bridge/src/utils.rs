@@ -18,7 +18,7 @@ pub struct CommitedValues {
 #[derive(AnchorSerialize, AnchorDeserialize, Debug)]
 pub struct ExecutionInput {
     pub rollup_accounts: RollupState, // use Vec<State> instead
-    pub txs: Vec<u8>, // Vec of serialized transactions: Vec<Transaction>
+    pub txs: Vec<u8>,                 // Vec of serialized transactions: Vec<Transaction>
     pub ramp_txs: Vec<RampTx>,
 }
 
