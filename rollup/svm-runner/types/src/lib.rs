@@ -1,6 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
-use solana_account::{Account, AccountSharedData};
+use solana_account::{Account, AccountSharedData, ReadableAccount};
 use solana_program::{clock::Epoch, hash::Hash};
 use solana_pubkey::Pubkey;
 use solana_sha256_hasher::hashv;
@@ -85,6 +85,18 @@ impl From<Account> for SerializableAccount {
             lamports: account.lamports,
             owner: account.owner,
             rent_epoch: account.rent_epoch,
+        }
+    }
+}
+
+impl From<AccountSharedData> for SerializableAccount {
+    fn from(account: AccountSharedData) -> SerializableAccount {
+        SerializableAccount {
+            data: account.data().to_vec(),
+            executable: account.executable(),
+            lamports: account.lamports(),
+            owner: *account.owner(),
+            rent_epoch: account.rent_epoch(),
         }
     }
 }

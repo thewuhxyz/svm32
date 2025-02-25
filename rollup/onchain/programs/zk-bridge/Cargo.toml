@@ -18,7 +18,6 @@ idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 anchor-debug = []
 custom-heap = []
 custom-panic = []
-solana = []
 
 [dependencies]
 anchor-lang = { workspace = true, features = ["init-if-needed"] }
@@ -29,8 +28,13 @@ verifier = { workspace = true }
 svm-runner-types = { path = "../../../svm-runner/types" }
 
 [dev-dependencies]
-anchor-client = {workspace = true, features = ["async"]}
+anchor-client = { workspace = true, features = ["async"] }
 anyhow = { version = "1" }
 litesvm = "0.5"
-tokio = {version = "1", features = ["full"]}
-zk-bridge = {path = "."}
+tokio = { version = "1", features = ["full"] }
+zk-bridge = { path = "." }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(target_os, values("solana"))',
+] }

@@ -33,7 +33,7 @@ pub mod zk_bridge {
         UploadProof::handle(ctx, args)
     }
 
-    pub fn prove(ctx: Context<Prove>, proof: utils::SP1Groth16Proof) -> Result<()> {
-        Prove::handle(ctx, proof)
+    pub fn prove(ctx: Context<Prove>) -> Result<()> {
+        Prove::handle(ctx)
     }
 }
