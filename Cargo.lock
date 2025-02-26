@@ -4043,6 +4043,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d97bbf43eb4f088f8ca469930cde17fa036207c9a5e02ccc5107c4e8b17c964"
 
 [[package]]
+name = "merkle-tree"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "borsh 1.5.5",
+ "serde",
+ "serde_bytes",
+ "solana-account",
+ "solana-hash",
+ "solana-program",
+ "solana-pubkey",
+ "solana-sdk",
+ "solana-sha256-hasher",
+ "solana-transaction",
+]
+
+[[package]]
 name = "merlin"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9347,12 +9364,14 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "borsh 1.5.5",
+ "merkle-tree",
  "serde",
  "serde_bytes",
  "solana-account",
  "solana-hash",
  "solana-program",
  "solana-pubkey",
+ "solana-sdk",
  "solana-sha256-hasher",
  "solana-transaction",
 ]

@@ -15,6 +15,7 @@ members = [
     "rollup/onchain/programs/*",
     "rollup/svm-runner/*",
     "rollup/zk/*",
+    "rollup/svm-runner/merkle-tree",
 ]
 resolver = "2"
 
@@ -176,6 +177,7 @@ sp1-zkvm = "4.1.1"
 sp1-sdk = "4.1.1"
 sp1-build = "4.1.1"
 verifier = { path = "rollup/zk/verifier" }
+merkle-tree = { path = "rollup/svm-runner/merkle-tree"}
 
 
 [patch.crates-io]
