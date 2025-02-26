@@ -12,7 +12,7 @@ use {
     std::{rc::Rc, str::FromStr},
     zk_bridge::{
         accounts, instruction,
-        instructions::{AddRampTxArgs, CreatePlatformArgs},
+        instructions::{AddRampTxArgs, CreatePlatformArgs, UploadProofArgs},
         utils::SP1Groth16Proof,
     },
 };
@@ -44,6 +44,10 @@ async fn runs() -> anyhow::Result<()> {
         Pubkey::find_program_address(&[b"platform:", platform_id.as_ref()], &program_id);
     let (ramp_key, _ramp_bump) = Pubkey::find_program_address(
         &[b"ramp:", platform_id.as_ref(), payer.pubkey().as_ref()],
+        &program_id,
+    );
+    let (proof_key, _proof_bump) = Pubkey::find_program_address(
+        &[b"proof:", platform_id.as_ref(), payer.pubkey().as_ref()],
         &program_id,
     );
 
@@ -90,29 +94,52 @@ async fn runs() -> anyhow::Result<()> {
     let tx_metadata = svm.send_transaction(tx).unwrap();
     println!("tx logs: {:#?}", tx_metadata.logs);
 
-    // Prove
-    let prove_ixs = program
+    // Upload proof
+    // Can be done in a single tx thanks to LiteSVM
+    let upload_proof_ix = program
         .request()
-        .accounts(accounts::Prove {
+        .args(instruction::UploadProof {
+            args: UploadProofArgs {
+                proof_size: proof.len() as u64,
+                proof_data: proof.to_vec(),
+                offset: 0,
+            },
+        })
+        .accounts(accounts::UploadProof {
             platform: platform_key,
+            proof: proof_key,
             prover: payer.pubkey(),
             system_program: system_program::ID,
         })
-        .args(instruction::Prove {
-            proof: grooth16_proof,
+        .instructions()?
+        .remove(0);
+    let tx = Transaction::new(
+        &[&payer],
+        Message::new(&[upload_proof_ix], Some(&payer.pubkey())),
+        svm.latest_blockhash(),
+    );
+    let tx_metadata = svm.send_transaction(tx).unwrap();
+    println!("tx logs: {:#?}", tx_metadata.logs);
+
+    // Prove
+    let prove_tx = program
+        .request()
+        .args(instruction::Prove {})
+        .accounts(accounts::Prove {
+            platform: platform_key,
+            proof: proof_key,
+            prover: payer.pubkey(),
+            system_program: system_program::ID,
         })
         .instructions()?
         .remove(0);
-
     let compute_budget_ix =
         compute_budget::ComputeBudgetInstruction::set_compute_unit_limit(1_400_000);
-
     let tx = Transaction::new(
         &[&payer],
-        Message::new(&[compute_budget_ix, prove_ixs], Some(&payer.pubkey())),
+        Message::new(&[compute_budget_ix, prove_tx], Some(&payer.pubkey())),
         svm.latest_blockhash(),
     );
-
     let tx_metadata = svm.send_transaction(tx).unwrap();
     println!("tx logs: {:#?}", tx_metadata.logs);
 

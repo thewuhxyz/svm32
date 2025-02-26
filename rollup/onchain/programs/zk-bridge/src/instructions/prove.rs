@@ -24,7 +24,15 @@ pub struct Prove<'info> {
     pub prover: Signer<'info>,
     /// CHECK: The proof is verified
     // pub proof: UncheckedAccount<'info>,
-    // pub proof: Account<'info, Proof>,
+    #[account(
+        seeds = [
+            PROOF_SEED_PREFIX,
+            platform.id.as_ref(),
+            prover.key().as_ref(),
+        ],
+        bump
+    )]
+    pub proof: Account<'info, Proof>,
     #[account(
         mut,
         seeds = [
@@ -38,8 +46,10 @@ pub struct Prove<'info> {
 }
 
 impl Prove<'_> {
-    pub fn handle(ctx: Context<Self>, proof: SP1Groth16Proof) -> Result<()> {
+    pub fn handle(ctx: Context<Self>) -> Result<()> {
         // Taking data from an account because it's too big to fit in an instruction
+        let proof: SP1Groth16Proof =
+            AnchorDeserialize::deserialize(&mut ctx.accounts.proof.data.as_slice())?;
         let commited_values = &proof.sp1_public_inputs;
 
         verify_proof(

@@ -1,8 +1,8 @@
 //! SVM runner executing transactions on the given accounts
 //!
-// use solana_account::Account;
+use itertools::Itertools;
 use solana_sdk::{
-    account::{Account, ReadableAccount, WritableAccount},
+    account::{ReadableAccount, WritableAccount},
     transaction::Transaction,
 };
 use solana_svm::transaction_processor::ExecutionRecordingConfig;
@@ -107,48 +107,24 @@ pub fn runner(input: ExecutionInput) -> RollupState {
     );
 
     println!("Batch Result {:#?}", result.processing_results);
+    let post_accounts = result
+        .processing_results
+        .into_iter()
+        .filter_map_ok(|res| {
+            res.executed_transaction()
+                .map(|tx| tx.loaded_transaction.accounts.clone())
+        })
+        .flatten()
+        .flatten()
+        .collect::<Vec<_>>();
 
     RollupState {
-        states: input
-            .accounts
-            .states
+        states: post_accounts
             .iter()
-            .map(|state| {
-                let account: Account = mock_bank
-                    .account_shared_data
-                    .read()
-                    .unwrap()
-                    .get(&state.pubkey)
-                    .unwrap()
-                    .clone()
-                    .into();
-                State {
-                    pubkey: state.pubkey,
-                    account: account.into(),
-                }
+            .map(|(pk, account)| State {
+                pubkey: *pk,
+                account: account.clone().into(),
             })
             .collect(),
     }
-
-    // BorshRollupState(
-    //     input
-    //         .accounts
-    //         .0
-    //         .iter()
-    //         .map(|(pk, _account)| {
-    //             let account: Account = mock_bank
-    //                     .account_shared_data
-    //                     .read()
-    //                     .unwrap()
-    //                     .get(pk)
-    //                     .unwrap()
-    //                     .clone()
-    //                     .into();
-    //             (
-    //                 *pk,
-    //                 account.into(),
-    //             )
-    //         })
-    //         .collect(),
-    // )
 }
