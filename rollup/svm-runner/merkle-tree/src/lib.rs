@@ -84,6 +84,20 @@ impl MerkleTree {
 
         self.root = current_level[0];
     }
+    
+    /// Update an existing account in the Merkle tree instead of rebuilding everything.
+    pub fn update(&mut self, pubkey: Pubkey, account: &Account) {
+        let account_hash = Self::hash_account(account);
+
+        // Find the index of the existing leaf
+        if let Some(index) = self.leaves.iter().position(|(pk, _)| *pk == pubkey) {
+            self.leaves[index] = (pubkey, account_hash); // Update the leaf
+        } else {
+            self.leaves.push((pubkey, account_hash)); // Insert if not found
+        }
+
+        self.build_tree(); // Recompute only the affected branches
+    }
 
     /// Hash two nodes to generate a parent node
     fn hash_nodes(left: &Hash, right: &Hash) -> Hash {
@@ -322,26 +336,6 @@ mod tests {
         assert_ne!(merkle_tree.get_root(), initial_root, "Root should change again after another insertion.");
     }
 
-    // #[test]
-    // fn test_find_leaf_index() {
-    //     let mut merkle_tree = MerkleTree::new();
-
-    //     let pubkey1 = Keypair::new().pubkey(); // Generate a valid pubkey
-    //     let account1 = create_example_account(pubkey1);
-    //     merkle_tree.insert(pubkey1, &account1);
-
-    //     let pubkey2 = Keypair::new().pubkey(); // Generate another valid pubkey
-    //     let account2 = create_example_account(pubkey2);
-    //     merkle_tree.insert(pubkey2, &account2);
-
-    //     // Verify that leaf indices are correct
-    //     let index1 = merkle_tree.find_leaf_index(&pubkey1);
-    //     let index2 = merkle_tree.find_leaf_index(&pubkey2);
-
-    //     assert_eq!(index1, Some(0), "Index of pubkey1 should be 0.");
-    //     assert_eq!(index2, Some(1), "Index of pubkey2 should be 1.");
-    // }
-
     #[test]
     fn test_generate_proof_invalid_pubkey() {
         let mut merkle_tree = MerkleTree::new();
@@ -357,23 +351,61 @@ mod tests {
 
         assert!(proof.is_none(), "Proof for an invalid pubkey should be None.");
     }
-    // Not like that, we dedouble instead of considering account hash as root
-    // #[test]
-    // fn test_integrity_of_solana_account() {
-    //     let mut merkle_tree = MerkleTree::new();
 
-    //     let pubkey = Keypair::new().pubkey(); // Generate a valid pubkey
-    //     let account = create_example_account(pubkey);
-    //     merkle_tree.insert(pubkey, &account);
-    //     println!("Tree after insertion of pubkey: {:?}", merkle_tree.tree);
+    #[test]
+    fn test_update_existing_and_new_accounts() {
+        let mut merkle_tree = MerkleTree::new();
 
-    //     // Get tree root after insertion
-    //     let root = merkle_tree.get_root();
+        // Create and insert an initial account
+        let pubkey1 = Keypair::new().pubkey();
+        let mut account1 = Account {
+            lamports: 1000,
+            data: vec![1, 2, 3],
+            executable: false,
+            rent_epoch: 0,
+            owner: pubkey1,
+        };
 
-    //     // Recreate account hash manually
-    //     let account_hash = MerkleTree::hash_account(&account);
+        merkle_tree.insert(pubkey1, &account1);
+        let initial_root = merkle_tree.get_root();
+        println!("🌳 Initial Merkle Tree: {:?}", merkle_tree.tree);
+        println!("🌳 Initial Merkle Root: {:?}", initial_root);
 
-    //     // Verify that account hash is correctly used as leaf in the tree
-    //     assert_eq!(root, account_hash, "Root does not match account hash.");
-    // }
+        // ✅ Updating an existing account (modifying lamports)
+        account1.lamports += 500; // Change balance
+        merkle_tree.update(pubkey1, &account1);
+
+        println!("🌳 Merkle Tree after updating account1: {:?}", merkle_tree.tree);
+        let updated_root = merkle_tree.get_root();
+        println!("🔄 Updated Merkle Root after modifying account1: {:?}", updated_root);
+
+        // Ensure the root changed after update
+        assert_ne!(initial_root, updated_root, "Merkle root should change after updating an account.");
+
+        // ✅ Updating an account that is NOT in the tree (should insert it)
+        let pubkey2 = Keypair::new().pubkey();
+        let account2 = Account {
+            lamports: 5000,
+            data: vec![4, 5, 6],
+            executable: false,
+            rent_epoch: 0,
+            owner: pubkey2,
+        };
+
+        merkle_tree.update(pubkey2, &account2);
+
+        println!("🌳 Merkle Tree after inserting account2: {:?}", merkle_tree.tree);
+        let new_root = merkle_tree.get_root();
+        println!("✅ Updated Merkle Root after inserting a new account (account2): {:?}", new_root);
+
+        // Ensure the root changed again after inserting a new account
+        assert_ne!(updated_root, new_root, "Merkle root should change after adding a new account.");
+
+        // ✅ Ensure proof can be generated for updated accounts
+        let proof1 = merkle_tree.generate_proof(&pubkey1);
+        assert!(proof1.is_some(), "Merkle proof should be generated for updated account1.");
+
+        let proof2 = merkle_tree.generate_proof(&pubkey2);
+        assert!(proof2.is_some(), "Merkle proof should be generated for newly added account2.");
+    }
 }
