@@ -14,7 +14,7 @@ pub fn main() {
     let input = ExecutionInput::try_from_slice(&input_bytes).unwrap();
 
     let rollup_state = runner(input.clone());
-    let hash = hash_state(rollup_state);
+    let hash = hash_state(&rollup_state);
 
     let output = CommitedValues {
         input,
