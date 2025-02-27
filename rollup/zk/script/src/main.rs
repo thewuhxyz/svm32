@@ -169,7 +169,7 @@ use sp1_sdk::{include_elf, HashableKey, ProverClient, SP1Stdin};
 use std::{fs::File, vec};
 use svm_runner_types::{
     hash_state, CommitedValues, ExecutionInput, RampTx, RollupState, SP1Groth16Proof,
-    SerializableAccount, State, generate_merkle_proof,
+    SerializableAccount, State,
 };
 use merkle_tree::MerkleTree;
 
@@ -191,7 +191,7 @@ struct Args {
     output_path: String,
 }
 
-/// Creates a test input with initial accounts and tracks the initial Merkle tree state
+/// Creates a test input with initial accounts
 fn create_test_input() -> ExecutionInput {
     let kp_sender_bytes: Vec<u8> =
         serde_json::from_slice(include_bytes!("../../../onchain/keypairSender.json")).unwrap();
@@ -214,9 +214,6 @@ fn create_test_input() -> ExecutionInput {
     )];
 
     let serialized_transactions = bincode::serialize(&transactions).unwrap();
-
-    let mut rollup_state = RollupState { states: Vec::new() };
-    let mut merkle_tree = MerkleTree::new();
 
     let accounts = vec![
         State {
@@ -241,25 +238,8 @@ fn create_test_input() -> ExecutionInput {
         },
     ];
 
-    // 📌 Step 1: Insert initial state into the Merkle Tree
-    println!("📥 Inserting initial state into Merkle Tree...");
-    for (i, state) in accounts.iter().enumerate() {
-        rollup_state.states.push(state.clone());
-        let account: Account = state.account.clone().into();
-        merkle_tree.insert(state.pubkey, &account);
-
-        println!("🔗 Merkle Root after inserting state {}: {:?}", i + 1, merkle_tree.get_root());
-    }
-    println!("✅ Initial Merkle Root: {:?}", merkle_tree.get_root());
-
-    // 📌 Step 2: Generate a proof for an account in the initial state
-    if let Some(first_account) = rollup_state.states.first() {
-        let proof = merkle_tree.generate_proof(&first_account.pubkey);
-        println!("🛠️ Merkle Proof for {:?}: {:?}", first_account.pubkey, proof);
-    }
-
     ExecutionInput {
-        accounts: rollup_state,
+        accounts: RollupState { states: accounts },
         txs: serialized_transactions,
         ramp_txs: vec![RampTx {
             is_onramp: true,
@@ -291,18 +271,33 @@ fn main() {
 
     stdin.write_slice(&bytes);
 
+    // ✅ Step 1: Initialize Merkle Tree and insert accounts
+    let mut merkle_tree = MerkleTree::new();
+    println!("📥 Inserting initial accounts into Merkle Tree...");
+
+    for (i, state) in input.accounts.states.iter().enumerate() {
+        let account: Account = state.account.clone().into();
+        merkle_tree.insert(state.pubkey, &account);
+
+        // Print tree state after each insertion
+        println!("🌳 Merkle Tree after inserting account {}: {:?}", i + 1, merkle_tree.tree);
+        println!("🔗 Merkle Root after inserting account {}: {:?}", i + 1, merkle_tree.get_root());
+    }
+
+    println!("✅ Final Initial Merkle Root: {:?}", merkle_tree.get_root());
+
     if args.execute {
-        // 📌 Step 3: Print account states before execution
+        // 📌 Step 2: Print account states before execution
         println!("📊 Checking account states BEFORE execution...");
         for state in &input.accounts.states {
             println!(" - {:?} -> {:?} lamports", state.pubkey, state.account.lamports);
         }
-
-        // 📌 Step 4: Execute transactions
+        
+        // 📌 Step 3: Execute transactions
         let (output, report) = client.execute(ELF, &stdin).run().unwrap();
         println!("✅ Program executed successfully.");
 
-        // 📌 Step 5: Simulate state update (since execution doesn't modify states in this script)
+        // 📌 Step 4: Simulate state update (since execution doesn't modify states in this script)
         let kp_sender_bytes: Vec<u8> =serde_json::from_slice(include_bytes!("../../../onchain/keypairSender.json")).unwrap();
         let kp_sender = Keypair::from_bytes(&kp_sender_bytes).expect("❌ Failed to parse sender keypair");
 
@@ -317,27 +312,27 @@ fn main() {
             }
         }
 
-        // 📌 Step 6: Print account states after execution
+        // 📌 Step 5: Print account states after execution
         println!("📊 Checking account states AFTER execution...");
         for state in &input.accounts.states {
             println!(" - {:?} -> {:?} lamports", state.pubkey, state.account.lamports);
         }
 
-        // 📌 Step 7: Update Merkle Tree after execution
-        let mut merkle_tree = MerkleTree::new();
+        // 📌 Step 6: Incrementally update Merkle Tree
         println!("🔄 Updating Merkle Tree after execution...");
         for state in &input.accounts.states {
             let account: Account = state.account.clone().into();
-            merkle_tree.insert(state.pubkey, &account);
+            merkle_tree.update(state.pubkey, &account); // Only update modified accounts
         }
         println!("✅ Updated Merkle Root after execution: {:?}", merkle_tree.get_root());
 
         // Track cycle count
         println!("📊 Number of cycles executed: {}", report.total_instruction_count());
     } else {
-        // 📌 Step 8: Setup the prover
+        // 📌 Step 7: Setup the prover
         println!("🔹 Initial Merkle Root: {}", hash_state(&input.accounts));
 
+        // Simulation..
         let kp_sender_bytes: Vec<u8> =serde_json::from_slice(include_bytes!("../../../onchain/keypairSender.json")).unwrap();
         let kp_sender = Keypair::from_bytes(&kp_sender_bytes).expect("❌ Failed to parse sender keypair");
 
@@ -351,24 +346,23 @@ fn main() {
                 state.account.lamports += LAMPORTS_PER_SOL;
             }
         }
-        // Simulation..
+        
         println!("📊 Checking account states AFTER execution...");
         for state in &input.accounts.states {
             println!(" - {:?} -> {:?} lamports", state.pubkey, state.account.lamports);
         }
 
-        let mut merkle_tree = MerkleTree::new();
         println!("🔄 Updating Merkle Tree after execution...");
         for state in &input.accounts.states {
             let account: Account = state.account.clone().into();
-            merkle_tree.insert(state.pubkey, &account);
+            merkle_tree.update(state.pubkey, &account); // Only update modified accounts
         }
         println!("✅ Updated Merkle Root after execution: {:?}", merkle_tree.get_root());
 
         let (pk, vk) = client.setup(ELF);
         println!("🔹 Verifying key: {}", vk.bytes32());
 
-        // 📌 Step 9: Generate the proof
+        // 📌 Step 8: Generate the proof
         println!("🚀 Starting proof generation...");
         let proof = client
             .prove(&pk, &stdin)
@@ -380,7 +374,7 @@ fn main() {
         let output = CommitedValues::try_from_slice(&proof.public_values.to_vec()).unwrap();
         println!("✅ Final state hash: {:?}", output.output); // TODO?
 
-        // 📌 Step 10: Store the proof
+        // 📌 Step 9: Store the proof
         let grooth16_proof = SP1Groth16Proof {
             proof: proof.bytes(),
             sp1_public_inputs: output,
@@ -392,7 +386,7 @@ fn main() {
             .expect("❌ Failed to write to file");
         println!("✅ Proof successfully written!");
 
-        // 📌 Step 11: Verify the proof
+        // 📌 Step 10: Verify the proof
         client.verify(&proof, &vk).expect("❌ Proof verification failed");
         println!("✅ Successfully verified proof!");
     }
