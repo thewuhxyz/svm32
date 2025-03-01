@@ -2252,6 +2252,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "merkle-tree"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "borsh 1.5.5",
+ "serde",
+ "serde_bytes",
+ "solana-account",
+ "solana-hash",
+ "solana-program",
+ "solana-pubkey",
+ "solana-sha256-hasher",
+]
+
+[[package]]
 name = "merlin"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5581,6 +5596,7 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "borsh 1.5.5",
+ "merkle-tree",
  "serde",
  "serde_bytes",
  "solana-account",
