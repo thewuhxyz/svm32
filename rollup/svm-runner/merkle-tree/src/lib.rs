@@ -1,9 +1,9 @@
-use solana_hash::Hash;
-use solana_sha256_hasher::hashv;
-use solana_sdk::{pubkey::Pubkey, account::Account};
 use bincode::serialize;
-use serde::{Serialize, Deserialize};
-
+use serde::{Deserialize, Serialize};
+use solana_account::Account;
+use solana_hash::Hash;
+use solana_pubkey::Pubkey;
+use solana_sha256_hasher::hashv;
 
 // /// Represents a Solana account in the Merkle Tree
 // #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -17,9 +17,9 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MerkleTree {
-    pub leaves: Vec<(Pubkey, Hash)>,    // Tree leaves with Pubkey and Hash
-    pub tree: Vec<Hash>,                // All tree nodes (including leaves)
-    pub root: Hash,                     // Tree root
+    pub leaves: Vec<(Pubkey, Hash)>, // Tree leaves with Pubkey and Hash
+    pub tree: Vec<Hash>,             // All tree nodes (including leaves)
+    pub root: Hash,                  // Tree root
 }
 
 impl MerkleTree {
@@ -55,7 +55,7 @@ impl MerkleTree {
 
         // Copy leaf hashes into the tree
         let mut current_level: Vec<Hash> = self.leaves.iter().map(|(_, hash)| *hash).collect();
-        
+
         // Ensure even number of leaves by duplicating last if necessary
         if current_level.len() % 2 != 0 {
             current_level.push(*current_level.last().unwrap());
@@ -95,33 +95,35 @@ impl MerkleTree {
         self.root
     }
 
-
-
     /// Generates a Merkle proof for a given public key
     pub fn generate_proof(&self, pubkey: &Pubkey) -> Option<Vec<Hash>> {
         let mut index = self.leaves.iter().position(|(pk, _)| pk == pubkey)?;
         let mut proof = Vec::new();
-        let mut current_level = self.leaves.iter().map(|(_, hash)| *hash).collect::<Vec<_>>();
-        
+        let mut current_level = self
+            .leaves
+            .iter()
+            .map(|(_, hash)| *hash)
+            .collect::<Vec<_>>();
+
         if current_level.len() % 2 != 0 {
             current_level.push(*current_level.last().unwrap());
         }
 
         let mut level_start = 0;
         let mut level_size = current_level.len();
-        
+
         while level_size > 1 {
             let is_right_node = index % 2 == 1;
             let sibling_index = if is_right_node { index - 1 } else { index + 1 };
-            
+
             if sibling_index < level_size {
                 proof.push(current_level[sibling_index]);
             }
-            
+
             index /= 2;
             level_start += level_size;
             level_size = (level_size + 1) / 2; // If odd, last element is copied
-            
+
             let mut next_level = Vec::new();
             for chunk in current_level.chunks(2) {
                 let left = &chunk[0];
@@ -129,26 +131,23 @@ impl MerkleTree {
                 let parent = Self::hash_nodes(left, right);
                 next_level.push(parent);
             }
-            
+
             if next_level.len() % 2 != 0 && next_level.len() > 1 {
                 next_level.push(*next_level.last().unwrap());
             }
-            
+
             current_level = next_level;
         }
-        
+
         Some(proof)
     }
-
 }
-
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use solana_sdk::pubkey::Pubkey;
+    use solana_pubkey::Pubkey;
     use solana_sdk::signature::{Keypair, Signer}; // For generating pubkeys
-
 
     fn create_example_account(pubkey: Pubkey) -> Account {
         Account {
@@ -176,7 +175,7 @@ mod tests {
         // Verify that proof can be generated
         let proof = merkle_tree.generate_proof(&pubkey1);
         assert!(proof.is_some());
-        
+
         // Proof should contain a single element (the duplicated hash)
         let proof_vec = proof.unwrap();
         assert_eq!(proof_vec.len(), 1);
@@ -195,7 +194,11 @@ mod tests {
         merkle_tree.insert(pubkey2, &account2);
 
         // Verify that root is generated after insertion
-        assert_ne!(merkle_tree.get_root(), Hash::default(), "Root should not be empty.");
+        assert_ne!(
+            merkle_tree.get_root(),
+            Hash::default(),
+            "Root should not be empty."
+        );
     }
 
     #[test]
@@ -254,8 +257,6 @@ mod tests {
         };
         merkle_tree.insert(pubkey5, &account5);
 
-        
-
         let pubkey6 = Pubkey::new_unique();
         let account6 = Account {
             lamports: 2000,
@@ -266,8 +267,6 @@ mod tests {
         };
         merkle_tree.insert(pubkey6, &account6);
 
-        
-
         let pubkey7 = Pubkey::new_unique();
         let account7 = Account {
             lamports: 2000,
@@ -277,8 +276,6 @@ mod tests {
             owner: pubkey7,
         };
         merkle_tree.insert(pubkey7, &account7);
-
-        
 
         let pubkey8 = Pubkey::new_unique();
         let account8 = Account {
@@ -306,12 +303,16 @@ mod tests {
         let pubkey1 = Keypair::new().pubkey(); // Generate a valid pubkey
         let account1 = create_example_account(pubkey1);
         let initial_root = merkle_tree.get_root();
-        
+
         // Add first account
         merkle_tree.insert(pubkey1, &account1);
-        
+
         // Verify that root changed after insertion
-        assert_ne!(merkle_tree.get_root(), initial_root, "Root should change after insertion.");
+        assert_ne!(
+            merkle_tree.get_root(),
+            initial_root,
+            "Root should change after insertion."
+        );
 
         // Add another account
         let pubkey2 = Keypair::new().pubkey(); // Generate another valid pubkey
@@ -319,7 +320,11 @@ mod tests {
         merkle_tree.insert(pubkey2, &account2);
 
         // Verify that root changes again
-        assert_ne!(merkle_tree.get_root(), initial_root, "Root should change again after another insertion.");
+        assert_ne!(
+            merkle_tree.get_root(),
+            initial_root,
+            "Root should change again after another insertion."
+        );
     }
 
     // #[test]
@@ -355,7 +360,10 @@ mod tests {
         // Verify that proof fails for a pubkey that doesn't exist in the tree
         let proof = merkle_tree.generate_proof(&invalid_pubkey);
 
-        assert!(proof.is_none(), "Proof for an invalid pubkey should be None.");
+        assert!(
+            proof.is_none(),
+            "Proof for an invalid pubkey should be None."
+        );
     }
     // Not like that, we dedouble instead of considering account hash as root
     // #[test]

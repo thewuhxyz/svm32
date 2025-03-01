@@ -13,5 +13,7 @@ solana-program = { workspace = true, features = ["borsh"] }
 solana-pubkey = {workspace = true}
 solana-hash = {workspace = true}
 solana-sha256-hasher = {workspace = true}
-solana-transaction = { workspace = true, features = ["bincode"]}
+# solana-transaction = { workspace = true, features = ["bincode"]}
+
+[dev-dependencies]
 solana-sdk = { workspace = true }

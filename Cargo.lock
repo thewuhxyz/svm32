@@ -4056,7 +4056,6 @@ dependencies = [
  "solana-pubkey",
  "solana-sdk",
  "solana-sha256-hasher",
- "solana-transaction",
 ]
 
 [[package]]
@@ -9371,7 +9370,6 @@ dependencies = [
  "solana-hash",
  "solana-program",
  "solana-pubkey",
- "solana-sdk",
  "solana-sha256-hasher",
  "solana-transaction",
 ]
